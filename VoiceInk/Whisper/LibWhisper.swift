@@ -14,7 +14,7 @@ actor WhisperContext {
     private var prompt: String?
     private var promptCString: [CChar]?
     private var vadModelPath: String?
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "WhisperContext")
+    private let logger = Logger(subsystem: "com.yiweishen.voiceink", category: "WhisperContext")
 
     private init() {}
 
@@ -30,10 +30,10 @@ actor WhisperContext {
 
     func fullTranscribe(samples: [Float]) -> Bool {
         guard let context = context else { return false }
-        
+
         let maxThreads = max(1, min(8, cpuCount() - 2))
         var params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY)
-        
+
         // Read language directly from UserDefaults
         let selectedLanguage = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "auto"
         if selectedLanguage != "auto" {
@@ -45,7 +45,7 @@ actor WhisperContext {
             languageCString = nil
             params.language = nil
         }
-        
+
         if prompt != nil {
             promptCString = Array(prompt!.utf8CString)
             params.initial_prompt = promptCString?.withUnsafeBufferPointer { ptr in
@@ -55,7 +55,7 @@ actor WhisperContext {
             promptCString = nil
             params.initial_prompt = nil
         }
-        
+
         params.print_realtime = true
         params.print_progress = false
         params.print_timestamps = true
@@ -68,13 +68,13 @@ actor WhisperContext {
         params.temperature = 0.2
 
         whisper_reset_timings(context)
-        
+
         // Configure VAD if enabled by user and model is available
         let isVADEnabled = UserDefaults.standard.object(forKey: "IsVADEnabled") as? Bool ?? true
         if isVADEnabled, let vadModelPath = self.vadModelPath {
             params.vad = true
             params.vad_model_path = (vadModelPath as NSString).utf8String
-            
+
             var vadParams = whisper_vad_default_params()
             vadParams.threshold = 0.50
             vadParams.min_speech_duration_ms = 250
@@ -86,7 +86,7 @@ actor WhisperContext {
         } else {
             params.vad = false
         }
-        
+
         var success = true
         samples.withUnsafeBufferPointer { samplesBuffer in
             if whisper_full(context, params, samplesBuffer.baseAddress, Int32(samplesBuffer.count)) != 0 {
@@ -94,10 +94,10 @@ actor WhisperContext {
                 success = false
             }
         }
-        
+
         languageCString = nil
         promptCString = nil
-        
+
         return success
     }
 
@@ -114,14 +114,14 @@ actor WhisperContext {
     static func createContext(path: String) async throws -> WhisperContext {
         let whisperContext = WhisperContext()
         try await whisperContext.initializeModel(path: path)
-        
+
         // Load VAD model from bundle resources
         let vadModelPath = await VADModelManager.shared.getModelPath()
         await whisperContext.setVADModelPath(vadModelPath)
-        
+
         return whisperContext
     }
-    
+
     private func initializeModel(path: String) throws {
         var params = whisper_context_default_params()
         #if targetEnvironment(simulator)
@@ -131,7 +131,7 @@ actor WhisperContext {
         params.flash_attn = true // Enable flash attention for Metal
         logger.info("Flash attention enabled for Metal")
         #endif
-        
+
         let context = whisper_init_from_file_with_params(path, params)
         if let context {
             self.context = context
@@ -140,7 +140,7 @@ actor WhisperContext {
             throw WhisperStateError.modelLoadFailed
         }
     }
-    
+
     private func setVADModelPath(_ path: String?) {
         self.vadModelPath = path
         if path != nil {

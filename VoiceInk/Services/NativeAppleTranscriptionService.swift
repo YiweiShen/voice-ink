@@ -9,13 +9,13 @@ import Speech
 /// Transcription service that leverages the new SpeechAnalyzer / SpeechTranscriber API available on macOS 26 (Tahoe).
 /// Falls back with an unsupported-provider error on earlier OS versions so the application can gracefully degrade.
 class NativeAppleTranscriptionService: TranscriptionService {
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "NativeAppleTranscriptionService")
-    
+    private let logger = Logger(subsystem: "com.yiweishen.voiceink", category: "NativeAppleTranscriptionService")
+
     /// Maps simple language codes to Apple's BCP-47 locale format
     private func mapToAppleLocale(_ simpleCode: String) -> String {
         let mapping = [
             "en": "en-US",
-            "es": "es-ES", 
+            "es": "es-ES",
             "fr": "fr-FR",
             "de": "de-DE",
             "ar": "ar-SA",
@@ -28,14 +28,14 @@ class NativeAppleTranscriptionService: TranscriptionService {
         ]
         return mapping[simpleCode] ?? "en-US"
     }
-    
+
     enum ServiceError: Error, LocalizedError {
         case unsupportedOS
         case transcriptionFailed
         case localeNotSupported
         case invalidModel
         case assetAllocationFailed
-        
+
         var errorDescription: String? {
             switch self {
             case .unsupportedOS:
@@ -56,19 +56,19 @@ class NativeAppleTranscriptionService: TranscriptionService {
         guard model is NativeAppleModel else {
             throw ServiceError.invalidModel
         }
-        
+
         guard #available(macOS 26, *) else {
             logger.error("SpeechAnalyzer is not available on this macOS version")
             throw ServiceError.unsupportedOS
         }
-        
+
         // Feature gated: SpeechAnalyzer/SpeechTranscriber are future APIs.
         // Enable by defining ENABLE_NATIVE_SPEECH_ANALYZER in build settings once building against macOS 26+ SDKs.
         #if canImport(Speech) && ENABLE_NATIVE_SPEECH_ANALYZER
         logger.notice("Starting Apple native transcription with SpeechAnalyzer.")
-        
+
         let audioFile = try AVAudioFile(forReading: audioURL)
-        
+
         // Get the user's selected language in simple format and convert to BCP-47 format
         let selectedLanguage = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en"
         let appleLocale = mapToAppleLocale(selectedLanguage)
@@ -84,7 +84,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
         let supportedIdentifiers = supportedLocales.map { $0.identifier(.bcp47) }.sorted().joined(separator: ", ")
         let installedIdentifiers = installedLocales.map { $0.identifier(.bcp47) }.sorted().joined(separator: ", ")
         let availableForDownload = Set(supportedLocales).subtracting(Set(installedLocales)).map { $0.identifier(.bcp47) }.sorted().joined(separator: ", ")
-        
+
         var statusMessage: String
         if isLocaleInstalled {
             statusMessage = "✅ Installed"
@@ -93,9 +93,9 @@ class NativeAppleTranscriptionService: TranscriptionService {
         } else {
             statusMessage = "❌ Not Supported"
         }
-        
+
         let logMessage = """
-        
+
         --- Native Speech Transcription ---
         Selected Language: '\(selectedLanguage)' → Apple Locale: '\(locale.identifier(.bcp47))'
         Status: \(statusMessage)
@@ -111,36 +111,36 @@ class NativeAppleTranscriptionService: TranscriptionService {
             logger.error("Transcription failed: Locale '\(locale.identifier(.bcp47))' is not supported by SpeechTranscriber.")
             throw ServiceError.localeNotSupported
         }
-        
+
         // Properly manage asset allocation/deallocation
         try await deallocateExistingAssets()
         try await allocateAssetsForLocale(locale)
-        
+
         let transcriber = SpeechTranscriber(
             locale: locale,
             transcriptionOptions: [],
             reportingOptions: [],
             attributeOptions: []
         )
-        
+
         // Ensure model assets are available, triggering a system download prompt if necessary.
         try await ensureModelIsAvailable(for: transcriber, locale: locale)
-        
+
         let analyzer = SpeechAnalyzer(modules: [transcriber])
-        
+
         try await analyzer.start(inputAudioFile: audioFile, finishAfterFile: true)
-        
+
         var transcript: AttributedString = ""
         for try await result in transcriber.results {
             transcript += result.text
         }
-        
+
         var finalTranscription = String(transcript.characters).trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         if UserDefaults.standard.object(forKey: "IsTextFormattingEnabled") as? Bool ?? true {
             finalTranscription = WhisperTextFormatter.format(finalTranscription)
         }
-        
+
         logger.notice("Native transcription successful. Length: \(finalTranscription.count) characters.")
         return finalTranscription
         #else
@@ -148,7 +148,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
         throw ServiceError.unsupportedOS
         #endif
     }
-    
+
     @available(macOS 26, *)
     private func deallocateExistingAssets() async throws {
         #if canImport(Speech) && ENABLE_NATIVE_SPEECH_ANALYZER
@@ -159,7 +159,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
         logger.notice("Deallocated existing asset locales.")
         #endif
     }
-    
+
     @available(macOS 26, *)
     private func allocateAssetsForLocale(_ locale: Locale) async throws {
         #if canImport(Speech) && ENABLE_NATIVE_SPEECH_ANALYZER
@@ -172,7 +172,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
         }
         #endif
     }
-    
+
     // Forward-compatibility: Use Any here because SpeechTranscriber is only available in future macOS SDKs.
     // This avoids referencing an unavailable SDK symbol while keeping the method shape for later adoption.
     @available(macOS 26, *)
@@ -183,7 +183,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
 
         if !isInstalled {
             logger.notice("Assets for '\(locale.identifier(.bcp47))' not installed. Requesting system download.")
-            
+
             if let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
                 try await request.downloadAndInstall()
                 logger.notice("Asset download for '\(locale.identifier(.bcp47))' complete.")
@@ -194,4 +194,4 @@ class NativeAppleTranscriptionService: TranscriptionService {
         }
         #endif
     }
-} 
+}

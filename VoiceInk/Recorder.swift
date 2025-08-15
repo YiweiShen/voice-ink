@@ -6,7 +6,7 @@ import os
 @MainActor
 class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private var recorder: AVAudioRecorder?
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "Recorder")
+    private let logger = Logger(subsystem: "com.yiweishen.voiceink", category: "Recorder")
     private let deviceManager = AudioDeviceManager.shared
     private var deviceObserver: NSObjectProtocol?
     private var isReconfiguring = false
@@ -15,16 +15,16 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published var audioMeter = AudioMeter(averagePower: 0, peakPower: 0)
     private var audioLevelCheckTask: Task<Void, Never>?
     private var hasDetectedAudioInCurrentSession = false
-    
+
     enum RecorderError: Error {
         case couldNotStartRecording
     }
-    
+
     override init() {
         super.init()
         setupDeviceChangeObserver()
     }
-    
+
     private func setupDeviceChangeObserver() {
         deviceObserver = AudioDeviceConfiguration.createDeviceChangeObserver { [weak self] in
             Task {
@@ -32,15 +32,15 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             }
         }
     }
-    
+
     private func handleDeviceChange() async {
         guard !isReconfiguring else { return }
         isReconfiguring = true
-        
+
         if recorder != nil {
             let currentURL = recorder?.url
             stopRecording()
-            
+
             if let url = currentURL {
                 do {
                     try await startRecording(toOutputFile: url)
@@ -51,17 +51,17 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         }
         isReconfiguring = false
     }
-    
+
     private func configureAudioSession(with deviceID: AudioDeviceID) async throws {
         try AudioDeviceConfiguration.setDefaultInputDevice(deviceID)
     }
-    
+
     func startRecording(toOutputFile url: URL) async throws {
         deviceManager.isRecordingActive = true
-        
+
         let currentDeviceID = deviceManager.getCurrentDevice()
         let lastDeviceID = UserDefaults.standard.string(forKey: "lastUsedMicrophoneDeviceID")
-        
+
         if String(currentDeviceID) != lastDeviceID {
             if let deviceName = deviceManager.availableDevices.first(where: { $0.id == currentDeviceID })?.name {
                 await MainActor.run {
@@ -73,14 +73,14 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             }
         }
         UserDefaults.standard.set(String(currentDeviceID), forKey: "lastUsedMicrophoneDeviceID")
-        
+
         hasDetectedAudioInCurrentSession = false
-        
-        Task { 
+
+        Task {
             await playbackController.pauseMedia()
             _ = await mediaController.muteSystemAudio()
         }
-        
+
         let deviceID = deviceManager.getCurrentDevice()
         if deviceID != 0 {
             do {
@@ -89,7 +89,7 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 logger.warning("⚠️ Failed to configure audio session for device \(deviceID), attempting to continue: \(error.localizedDescription)")
             }
         }
-        
+
         let recordSettings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatLinearPCM),
             AVSampleRateKey: 16000.0,
@@ -99,26 +99,26 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             AVLinearPCMIsBigEndianKey: false,
             AVLinearPCMIsNonInterleaved: false
         ]
-        
+
         do {
             recorder = try AVAudioRecorder(url: url, settings: recordSettings)
             recorder?.delegate = self
             recorder?.isMeteringEnabled = true
-            
+
             if recorder?.record() == false {
                 logger.error("❌ Could not start recording")
                 throw RecorderError.couldNotStartRecording
             }
-            
+
             audioLevelCheckTask?.cancel()
-            
+
             Task {
                 while recorder != nil {
                     updateAudioMeter()
                     try? await Task.sleep(nanoseconds: 33_000_000)
                 }
             }
-            
+
             audioLevelCheckTask = Task {
                 let notificationChecks: [TimeInterval] = [5.0, 12.0]
 
@@ -139,20 +139,20 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     }
                 }
             }
-            
+
         } catch {
             logger.error("Failed to create audio recorder: \(error.localizedDescription)")
             stopRecording()
             throw RecorderError.couldNotStartRecording
         }
     }
-    
+
     func stopRecording() {
         audioLevelCheckTask?.cancel()
         recorder?.stop()
         recorder = nil
         audioMeter = AudioMeter(averagePower: 0, peakPower: 0)
-        
+
         Task {
             await mediaController.unmuteSystemAudio()
             try? await Task.sleep(nanoseconds: 100_000_000)
@@ -164,11 +164,11 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private func updateAudioMeter() {
         guard let recorder = recorder else { return }
         recorder.updateMeters()
-        
+
         let averagePower = recorder.averagePower(forChannel: 0)
         let peakPower = recorder.peakPower(forChannel: 0)
-        
-        let minVisibleDb: Float = -60.0 
+
+        let minVisibleDb: Float = -60.0
         let maxVisibleDb: Float = 0.0
 
         let normalizedAverage: Float
@@ -179,7 +179,7 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         } else {
             normalizedAverage = (averagePower - minVisibleDb) / (maxVisibleDb - minVisibleDb)
         }
-        
+
         let normalizedPeak: Float
         if peakPower < minVisibleDb {
             normalizedPeak = 0.0
@@ -188,18 +188,18 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         } else {
             normalizedPeak = (peakPower - minVisibleDb) / (maxVisibleDb - minVisibleDb)
         }
-        
+
         let newAudioMeter = AudioMeter(averagePower: Double(normalizedAverage), peakPower: Double(normalizedPeak))
 
         if !hasDetectedAudioInCurrentSession && newAudioMeter.averagePower > 0.01 {
             hasDetectedAudioInCurrentSession = true
         }
-        
+
         audioMeter = newAudioMeter
     }
-    
+
     // MARK: - AVAudioRecorderDelegate
-    
+
     nonisolated func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         if !flag {
             logger.error("❌ Recording finished unsuccessfully - file may be corrupted or empty")
@@ -211,7 +211,7 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             }
         }
     }
-    
+
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         if let error = error {
             logger.error("❌ Recording encode error during session: \(error.localizedDescription)")
@@ -223,7 +223,7 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             }
         }
     }
-    
+
     deinit {
         if let observer = deviceObserver {
             NotificationCenter.default.removeObserver(observer)

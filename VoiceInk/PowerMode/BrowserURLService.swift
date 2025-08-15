@@ -14,7 +14,7 @@ enum BrowserType {
     case orion
     case zen
     case yandex
-    
+
     var scriptName: String {
         switch self {
         case .safari: return "safariURL"
@@ -30,7 +30,7 @@ enum BrowserType {
         case .yandex: return "yandexURL"
         }
     }
-    
+
     var bundleIdentifier: String {
         switch self {
         case .safari: return "com.apple.Safari"
@@ -46,7 +46,7 @@ enum BrowserType {
         case .yandex: return "ru.yandex.desktop.yandex-browser"
         }
     }
-    
+
     var displayName: String {
         switch self {
         case .safari: return "Safari"
@@ -62,11 +62,11 @@ enum BrowserType {
         case .yandex: return "Yandex Browser"
         }
     }
-    
+
     static var allCases: [BrowserType] {
         [.safari, .arc, .chrome, .edge, .brave, .opera, .vivaldi, .orion, .yandex]
     }
-    
+
     static var installedBrowsers: [BrowserType] {
         allCases.filter { browser in
             let workspace = NSWorkspace.shared
@@ -85,54 +85,54 @@ enum BrowserURLError: Error {
 
 class BrowserURLService {
     static let shared = BrowserURLService()
-    
+
     private let logger = Logger(
-        subsystem: "com.prakashjoshipax.VoiceInk",
+        subsystem: "com.yiweishen.VoiceInk",
         category: "browser.applescript"
     )
-    
+
     private init() {}
-    
+
     func getCurrentURL(from browser: BrowserType) async throws -> String {
         guard let scriptURL = Bundle.main.url(forResource: browser.scriptName, withExtension: "scpt") else {
             logger.error("❌ AppleScript file not found: \(browser.scriptName).scpt")
             throw BrowserURLError.scriptNotFound
         }
-        
+
         logger.debug("🔍 Attempting to execute AppleScript for \(browser.displayName)")
-        
+
         // Check if browser is running
         if !isRunning(browser) {
             logger.error("❌ Browser not running: \(browser.displayName)")
             throw BrowserURLError.browserNotRunning
         }
-        
+
         let task = Process()
         task.launchPath = "/usr/bin/osascript"
         task.arguments = [scriptURL.path]
-        
+
         let pipe = Pipe()
         task.standardOutput = pipe
         task.standardError = pipe
-        
+
         do {
             logger.debug("▶️ Executing AppleScript for \(browser.displayName)")
             try task.run()
             task.waitUntilExit()
-            
+
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
                 if output.isEmpty {
                     logger.error("❌ Empty output from AppleScript for \(browser.displayName)")
                     throw BrowserURLError.noActiveTab
                 }
-                
+
                 // Check if output contains error messages
                 if output.lowercased().contains("error") {
                     logger.error("❌ AppleScript error for \(browser.displayName): \(output)")
                     throw BrowserURLError.executionFailed
                 }
-                
+
                 logger.debug("✅ Successfully retrieved URL from \(browser.displayName): \(output)")
                 return output
             } else {
@@ -144,7 +144,7 @@ class BrowserURLService {
             throw BrowserURLError.executionFailed
         }
     }
-    
+
     func isRunning(_ browser: BrowserType) -> Bool {
         let workspace = NSWorkspace.shared
         let runningApps = workspace.runningApplications
@@ -152,4 +152,4 @@ class BrowserURLService {
         logger.debug("\(browser.displayName) running status: \(isRunning)")
         return isRunning
     }
-} 
+}

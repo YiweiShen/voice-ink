@@ -5,7 +5,7 @@ import OSLog
 class TranscriptionAutoCleanupService {
     static let shared = TranscriptionAutoCleanupService()
 
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionAutoCleanupService")
+    private let logger = Logger(subsystem: "com.yiweishen.voiceink", category: "TranscriptionAutoCleanupService")
     private var modelContext: ModelContext?
 
     private let keyIsEnabled = "IsTranscriptionCleanupEnabled"
@@ -26,7 +26,7 @@ class TranscriptionAutoCleanupService {
         )
 
         if UserDefaults.standard.bool(forKey: keyIsEnabled) {
-            
+
             Task { [weak self] in
                 guard let self = self, let modelContext = self.modelContext else { return }
                 await self.sweepOldTranscriptions(modelContext: modelContext)
@@ -36,7 +36,7 @@ class TranscriptionAutoCleanupService {
 
     func stopMonitoring() {
         NotificationCenter.default.removeObserver(self, name: .transcriptionCreated, object: nil)
-        
+
     }
 
     func runManualCleanup(modelContext: ModelContext) async {
@@ -65,14 +65,14 @@ class TranscriptionAutoCleanupService {
             return
         }
 
-        
+
 
         // Delete the audio file if it exists
         if let urlString = transcription.audioFileURL,
            let url = URL(string: urlString) {
             do {
                 try FileManager.default.removeItem(at: url)
-                
+
             } catch {
                 logger.error("Failed to delete audio file: \(error.localizedDescription)")
             }
@@ -83,7 +83,7 @@ class TranscriptionAutoCleanupService {
 
         do {
             try modelContext.save()
-            
+
         } catch {
             logger.error("Failed to save after transcription deletion: \(error.localizedDescription)")
         }
