@@ -1,6 +1,6 @@
 import SwiftUI
 
-extension String: Identifiable {
+extension String: @retroactive Identifiable {
     public var id: String { self }
 }
 
