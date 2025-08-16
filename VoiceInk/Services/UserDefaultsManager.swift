@@ -3,8 +3,7 @@ import Foundation
 extension UserDefaults {
     enum Keys {
         static let aiProviderApiKey = "VoiceInkAIProviderKey"
-        static let licenseKey = "VoiceInkLicense"
-        static let trialStartDate = "VoiceInkTrialStartDate"
+        static let licenseKey = "VoiceInkLicense" // Kept for compatibility but not used for validation
         static let audioInputMode = "audioInputMode"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let prioritizedDevices = "prioritizedDevices"
@@ -16,16 +15,10 @@ extension UserDefaults {
         set { setValue(newValue, forKey: Keys.aiProviderApiKey) }
     }
     
-    // MARK: - License Key
+    // MARK: - License Key (kept for compatibility, not used for validation)
     var licenseKey: String? {
         get { string(forKey: Keys.licenseKey) }
         set { setValue(newValue, forKey: Keys.licenseKey) }
-    }
-    
-    // MARK: - Trial Start Date
-    var trialStartDate: Date? {
-        get { object(forKey: Keys.trialStartDate) as? Date }
-        set { setValue(newValue, forKey: Keys.trialStartDate) }
     }
 
     // MARK: - Audio Input Mode

@@ -14,7 +14,6 @@ struct OnboardingPermission: Identifiable {
         case microphone
         case audioDeviceSelection
         case accessibility
-        case screenRecording
         case keyboardShortcut
         
         var systemName: String {
@@ -22,7 +21,6 @@ struct OnboardingPermission: Identifiable {
             case .microphone: return "mic"
             case .audioDeviceSelection: return "headphones"
             case .accessibility: return "accessibility"
-            case .screenRecording: return "rectangle.inset.filled.and.person.filled"
             case .keyboardShortcut: return "keyboard"
             }
         }
@@ -34,7 +32,7 @@ struct OnboardingPermissionsView: View {
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @ObservedObject private var audioDeviceManager = AudioDeviceManager.shared
     @State private var currentPermissionIndex = 0
-    @State private var permissionStates: [Bool] = [false, false, false, false, false]
+    @State private var permissionStates: [Bool] = [false, false, false, false]
     @State private var showAnimation = false
     @State private var scale: CGFloat = 0.8
     @State private var opacity: CGFloat = 0
@@ -58,12 +56,6 @@ struct OnboardingPermissionsView: View {
             description: "Allow VoiceInk to help you type anywhere in your Mac.",
             icon: "accessibility",
             type: .accessibility
-        ),
-        OnboardingPermission(
-            title: "Screen Recording",
-            description: "This helps to improve the accuracy of transcription.",
-            icon: "rectangle.inset.filled.and.person.filled",
-            type: .screenRecording
         ),
         OnboardingPermission(
             title: "Keyboard Shortcut",
@@ -274,11 +266,8 @@ struct OnboardingPermissionsView: View {
         // Check accessibility permission
         permissionStates[2] = AXIsProcessTrusted()
         
-        // Check screen recording permission
-        permissionStates[3] = CGPreflightScreenCaptureAccess()
-        
         // Check keyboard shortcut
-        permissionStates[4] = hotkeyManager.isShortcutConfigured
+        permissionStates[3] = hotkeyManager.isShortcutConfigured
     }
     
     private func requestPermission() {
@@ -341,26 +330,6 @@ struct OnboardingPermissionsView: View {
             // Start checking for permission status
             Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
                 if AXIsProcessTrusted() {
-                    timer.invalidate()
-                    permissionStates[currentPermissionIndex] = true
-                    withAnimation {
-                        showAnimation = true
-                    }
-                }
-            }
-            
-        case .screenRecording:
-            // First try to request permission programmatically
-            CGRequestScreenCaptureAccess()
-            
-            // Also open system preferences as fallback
-            if let prefpaneURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                NSWorkspace.shared.open(prefpaneURL)
-            }
-            
-            // Start checking for permission status
-            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
-                if CGPreflightScreenCaptureAccess() {
                     timer.invalidate()
                     permissionStates[currentPermissionIndex] = true
                     withAnimation {

@@ -5,7 +5,6 @@ struct MetricsSetupView: View {
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @State private var isAccessibilityEnabled = AXIsProcessTrusted()
-    @State private var isScreenRecordingEnabled = CGPreflightScreenCaptureAccess()
     
     var body: some View {
         ScrollView {
@@ -15,7 +14,7 @@ struct MetricsSetupView: View {
                     AppIconView()
                         .frame(width: 80, height: 80)
                         .padding(.bottom, 20)
-                       
+                    
                     VStack(spacing: 4) {
                         Text("Welcome to VoiceInk")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -32,9 +31,9 @@ struct MetricsSetupView: View {
                 
                 // Setup Steps
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach(0..<4) { index in
+                    ForEach(0..<3) { index in
                         setupStep(for: index)
-                        if index < 3 {
+                        if index < 2 {
                             Divider().padding(.leading, 70)
                         }
                     }
@@ -79,13 +78,6 @@ struct MetricsSetupView: View {
                 icon: "hand.raised.fill",
                 title: "Enable Accessibility",
                 description: "Paste transcribed text at your cursor."
-            )
-        case 2:
-            stepInfo = (
-                isCompleted: isScreenRecordingEnabled,
-                icon: "video.fill",
-                title: "Enable Screen Recording",
-                description: "Get better transcriptions with screen context."
             )
         default:
             stepInfo = (
@@ -156,12 +148,6 @@ struct MetricsSetupView: View {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                     NSWorkspace.shared.open(url)
                 }
-            } else if !CGPreflightScreenCaptureAccess() {
-                CGRequestScreenCaptureAccess()
-                // After requesting, open system preferences as fallback
-                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                    NSWorkspace.shared.open(url)
-                }
             }
         }
     }
@@ -171,8 +157,6 @@ struct MetricsSetupView: View {
             return "Configure Shortcut"
         } else if !AXIsProcessTrusted() {
             return "Enable Accessibility"
-        } else if !CGPreflightScreenCaptureAccess() {
-            return "Enable Screen Recording"
         } else if whisperState.currentTranscriptionModel == nil {
             return "Download Model"
         }
@@ -187,8 +171,7 @@ struct MetricsSetupView: View {
     
     private var isShortcutAndAccessibilityGranted: Bool {
         hotkeyManager.selectedHotkey1 != .none &&
-        AXIsProcessTrusted() && 
-        CGPreflightScreenCaptureAccess()
+        AXIsProcessTrusted()
     }
     
     private func openSettings() {
@@ -207,4 +190,5 @@ struct MetricsSetupView: View {
         )
     }
 }
+
 

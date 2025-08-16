@@ -113,8 +113,6 @@ struct MenuBarView: View {
             Toggle("Use Clipboard Context", isOn: $enhancementService.useClipboardContext)
                 .disabled(!enhancementService.isEnhancementEnabled)
             
-            Toggle("Use Screen Context", isOn: $enhancementService.useScreenCaptureContext)
-                .disabled(!enhancementService.isEnhancementEnabled)
             
             Menu("Additional") {
                 Button {

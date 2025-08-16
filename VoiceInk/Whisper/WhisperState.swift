@@ -191,10 +191,6 @@ class WhisperState: NSObject, ObservableObject {
             try? await parakeetTranscriptionService.loadModel()
                             }
 
-                            if let enhancementService = self.enhancementService,
-                               enhancementService.useScreenCaptureContext {
-                                await enhancementService.captureScreenContext()
-                            }
 
                         } catch {
                             self.logger.error("❌ Failed to start recording: \(error.localizedDescription)")
@@ -345,12 +341,7 @@ class WhisperState: NSObject, ObservableObject {
                 NotificationCenter.default.post(name: .transcriptionCreated, object: newTranscription)
             }
 
-            if case .trialExpired = licenseViewModel.licenseState {
-                text = """
-                    Your trial has expired. Upgrade to VoiceInk Pro at tryvoiceink.com/buy
-                    \n\(text)
-                    """
-            }
+            // Trial expired check removed - always licensed
 
             text += " "
 
