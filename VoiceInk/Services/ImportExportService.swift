@@ -28,7 +28,6 @@ struct GeneralSettings: Codable {
 struct VoiceInkExportedSettings: Codable {
     let version: String
     let customPrompts: [CustomPrompt]
-    let powerModeConfigs: [PowerModeConfig]
     let dictionaryItems: [DictionaryItem]?
     let wordReplacements: [String: String]?
     let generalSettings: GeneralSettings?
@@ -65,12 +64,7 @@ class ImportExportService {
 
     @MainActor
     func exportSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
-        let powerModeManager = PowerModeManager.shared
-        let emojiManager = EmojiManager.shared
-
         let exportablePrompts = enhancementService.customPrompts.filter { !$0.isPredefined }
-
-        let powerConfigs = powerModeManager.configurations
         
         // Export custom models
         let customModels = CustomModelManager.shared.customModels
@@ -107,11 +101,10 @@ class ImportExportService {
         let exportedSettings = VoiceInkExportedSettings(
             version: currentSettingsVersion,
             customPrompts: exportablePrompts,
-            powerModeConfigs: powerConfigs,
             dictionaryItems: exportedDictionaryItems,
             wordReplacements: exportedWordReplacements,
             generalSettings: generalSettingsToExport,
-            customEmojis: emojiManager.customEmojis,
+            customEmojis: nil,
             customCloudModels: customModels
         )
 
@@ -175,10 +168,6 @@ class ImportExportService {
                     let predefinedPrompts = enhancementService.customPrompts.filter { $0.isPredefined }
                     enhancementService.customPrompts = predefinedPrompts + importedSettings.customPrompts
                     
-                    let powerModeManager = PowerModeManager.shared
-                    powerModeManager.configurations = importedSettings.powerModeConfigs
-                    powerModeManager.saveConfigurations()
-
                     // Import Custom Models
                     if let modelsToImport = importedSettings.customCloudModels {
                         let customModelManager = CustomModelManager.shared
@@ -188,13 +177,6 @@ class ImportExportService {
                         print("Successfully imported \(modelsToImport.count) custom models.")
                     } else {
                         print("No custom models found in the imported file.")
-                    }
-
-                    if let customEmojis = importedSettings.customEmojis {
-                        let emojiManager = EmojiManager.shared
-                        for emoji in customEmojis {
-                            _ = emojiManager.addCustomEmoji(emoji)
-                        }
                     }
 
                     if let itemsToImport = importedSettings.dictionaryItems {

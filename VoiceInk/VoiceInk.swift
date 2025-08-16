@@ -13,7 +13,6 @@ struct VoiceInkApp: App {
     @StateObject private var menuBarManager: MenuBarManager
     @StateObject private var aiService = AIService()
     @StateObject private var enhancementService: AIEnhancementService
-    @StateObject private var activeWindowService = ActiveWindowService.shared
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     // Audio cleanup manager for automatic deletion of old audio files
@@ -73,10 +72,6 @@ struct VoiceInkApp: App {
         )
         _menuBarManager = StateObject(wrappedValue: menuBarManager)
 
-        let activeWindowService = ActiveWindowService.shared
-        activeWindowService.configure(with: enhancementService)
-        activeWindowService.configureWhisperState(whisperState)
-        _activeWindowService = StateObject(wrappedValue: activeWindowService)
     }
 
     var body: some Scene {
@@ -90,7 +85,9 @@ struct VoiceInkApp: App {
                     .environmentObject(enhancementService)
                     .modelContainer(container)
                     .onAppear {
-
+                        // Force language to always use auto-detect
+                        UserDefaults.standard.set("auto", forKey: "SelectedLanguage")
+                        
                         // Start the transcription auto-cleanup service (handles immediate and scheduled transcript deletion)
                         transcriptionAutoCleanupService.startMonitoring(modelContext: container.mainContext)
 

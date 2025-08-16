@@ -6,7 +6,6 @@ struct MiniRecorderView: View {
     @EnvironmentObject var windowManager: MiniWindowManager
     @EnvironmentObject private var enhancementService: AIEnhancementService
     
-    @State private var showPowerModePopover = false
     @State private var showEnhancementPromptPopover = false
     
     private var backgroundView: some View {
@@ -46,10 +45,6 @@ struct MiniRecorderView: View {
                 .frame(maxWidth: .infinity)
             
             Spacer()
-            
-            // Right button zone - always visible
-            RecorderPowerModeButton(showPopover: $showPowerModePopover)
-                .padding(.trailing, 7)
         }
         .padding(.vertical, 9)
     }

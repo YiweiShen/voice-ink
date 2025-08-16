@@ -46,7 +46,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func cleanupLegacyUserDefaults() {
         let defaults = UserDefaults.standard
+        // Clean up Power Mode related settings
         defaults.removeObject(forKey: "defaultPowerModeConfigV2")
         defaults.removeObject(forKey: "isPowerModeEnabled")
+        defaults.removeObject(forKey: "powerModeConfigurations")
+        defaults.removeObject(forKey: "activePowerModeConfiguration")
     }
 }

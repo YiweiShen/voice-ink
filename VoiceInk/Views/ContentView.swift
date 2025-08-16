@@ -7,7 +7,6 @@ enum ViewType: String, CaseIterable {
     case metrics = "Dashboard"
     case history = "History"
     case models = "AI Models"
-    case powerMode = "Power Mode"
     case permissions = "Permissions"
     case audioInput = "Audio Input"
     case dictionary = "Dictionary"
@@ -18,7 +17,6 @@ enum ViewType: String, CaseIterable {
         case .metrics: return "gauge.medium"
         case .history: return "doc.text.fill"
         case .models: return "brain.head.profile"
-        case .powerMode: return "sparkles.square.fill.on.square"
         case .permissions: return "shield.fill"
         case .audioInput: return "mic.fill"
         case .dictionary: return "character.book.closed.fill"
@@ -220,8 +218,6 @@ struct ContentView: View {
             AudioInputSettingsView()
         case .dictionary:
             DictionarySettingsView(whisperPrompt: whisperState.whisperPrompt)
-        case .powerMode:
-            PowerModeView()
         case .settings:
             SettingsView()
                 .environmentObject(whisperState)

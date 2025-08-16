@@ -107,10 +107,6 @@ class WhisperState: NSObject, ObservableObject {
 
         super.init()
 
-        // Configure the session manager
-        if let enhancementService = enhancementService {
-            PowerModeSessionManager.shared.configure(whisperState: self, enhancementService: enhancementService)
-        }
 
         // Set the whisperState reference after super.init()
         self.localTranscriptionService = LocalTranscriptionService(modelsDirectory: self.modelsDirectory, whisperState: self)
@@ -175,7 +171,6 @@ class WhisperState: NSObject, ObservableObject {
                                 self.recordingState = .recording
                             }
 
-                            await ActiveWindowService.shared.applyConfigurationForCurrentApp()
 
                             // Only load model if it's a local model and not already loaded
                             if let model = self.currentTranscriptionModel, model.provider == .local {
@@ -350,14 +345,6 @@ class WhisperState: NSObject, ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
 
                 CursorPaster.pasteAtCursor(text)
-
-                let powerMode = PowerModeManager.shared
-                if let activeConfig = powerMode.currentActiveConfiguration, activeConfig.isAutoSendEnabled {
-                    // Slight delay to ensure the paste operation completes
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        CursorPaster.pressEnter()
-                    }
-                }
             }
 
             if let result = promptDetectionResult,

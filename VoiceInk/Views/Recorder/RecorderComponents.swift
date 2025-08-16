@@ -156,35 +156,6 @@ struct RecorderPromptButton: View {
     }
 }
 
-// MARK: - Power Mode Button Component
-struct RecorderPowerModeButton: View {
-    @ObservedObject private var powerModeManager = PowerModeManager.shared
-    @Binding var showPopover: Bool
-    let buttonSize: CGFloat
-    let padding: EdgeInsets
-    
-    init(showPopover: Binding<Bool>, buttonSize: CGFloat = 28, padding: EdgeInsets = EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 7)) {
-        self._showPopover = showPopover
-        self.buttonSize = buttonSize
-        self.padding = padding
-    }
-    
-    var body: some View {
-        RecorderToggleButton(
-            isEnabled: !powerModeManager.enabledConfigurations.isEmpty,
-            icon: powerModeManager.currentActiveConfiguration?.emoji ?? "✨",
-            color: .orange,
-            disabled: powerModeManager.enabledConfigurations.isEmpty
-        ) {
-            showPopover.toggle()
-        }
-        .frame(width: buttonSize)
-        .padding(padding)
-        .popover(isPresented: $showPopover, arrowEdge: .bottom) {
-            PowerModePopover()
-        }
-    }
-}
 
 // MARK: - Status Display Component
 struct RecorderStatusDisplay: View {
