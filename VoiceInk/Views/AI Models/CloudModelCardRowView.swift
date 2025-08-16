@@ -268,22 +268,11 @@ struct CloudModelCardView: View {
         isVerifying = true
         verificationStatus = .verifying
         
-        switch model.provider {
-        case .groq:
-            aiService.selectedProvider = .groq
-        case .elevenLabs:
-            aiService.selectedProvider = .elevenLabs
-        case .deepgram:
-            aiService.selectedProvider = .deepgram
-        case .mistral:
-            aiService.selectedProvider = .mistral
-        default:
-            // This case should ideally not be hit for cloud models in this view
-            print("Warning: verifyAPIKey called for unsupported provider \(model.provider.rawValue)")
-            isVerifying = false
-            verificationStatus = .failure
-            return
-        }
+        // Cloud models are no longer supported - all should use Ollama
+        print("Warning: Cloud models are no longer supported. Please use Ollama instead.")
+        isVerifying = false
+        verificationStatus = .failure
+        return
         
         aiService.saveAPIKey(apiKey) { isValid in
             DispatchQueue.main.async {

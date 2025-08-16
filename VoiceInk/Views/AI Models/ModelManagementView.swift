@@ -4,9 +4,7 @@ import AppKit
 import UniformTypeIdentifiers
 
 enum ModelFilter: String, CaseIterable, Identifiable {
-    case recommended = "Recommended"
     case local = "Local"
-    case cloud = "Cloud"
     case custom = "Custom"
     var id: String { self.rawValue }
 }
@@ -20,7 +18,7 @@ struct ModelManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var whisperPrompt = WhisperPrompt()
 
-    @State private var selectedFilter: ModelFilter = .recommended
+    @State private var selectedFilter: ModelFilter = .local
     @State private var isShowingSettings = false
     
     // State for the unified alert
@@ -205,21 +203,8 @@ struct ModelManagementView: View {
 
     private var filteredModels: [any TranscriptionModel] {
         switch selectedFilter {
-        case .recommended:
-            return whisperState.allAvailableModels.filter {
-                let recommendedNames = ["ggml-base.en", "ggml-large-v3-turbo-q5_0", "ggml-large-v3-turbo", "whisper-large-v3-turbo"]
-                return recommendedNames.contains($0.name)
-            }.sorted { model1, model2 in
-                let recommendedOrder = ["ggml-base.en", "ggml-large-v3-turbo-q5_0", "ggml-large-v3-turbo", "whisper-large-v3-turbo"]
-                let index1 = recommendedOrder.firstIndex(of: model1.name) ?? Int.max
-                let index2 = recommendedOrder.firstIndex(of: model2.name) ?? Int.max
-                return index1 < index2
-            }
         case .local:
             return whisperState.allAvailableModels.filter { $0.provider == .local || $0.provider == .nativeApple || $0.provider == .parakeet }
-        case .cloud:
-            let cloudProviders: [ModelProvider] = [.groq, .elevenLabs, .deepgram, .mistral]
-            return whisperState.allAvailableModels.filter { cloudProviders.contains($0.provider) }
         case .custom:
             return whisperState.allAvailableModels.filter { $0.provider == .custom }
         }

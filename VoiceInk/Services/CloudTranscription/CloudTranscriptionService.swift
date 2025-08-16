@@ -35,40 +35,8 @@ enum CloudTranscriptionError: Error, LocalizedError {
 
 class CloudTranscriptionService: TranscriptionService {
     
-    private lazy var groqService = GroqTranscriptionService()
-    private lazy var elevenLabsService = ElevenLabsTranscriptionService()
-    private lazy var deepgramService = DeepgramTranscriptionService()
-    private lazy var mistralService = MistralTranscriptionService()
-    private lazy var openAICompatibleService = OpenAICompatibleTranscriptionService()
-    
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
-        var text: String
-        
-        switch model.provider {
-        case .groq:
-            text = try await groqService.transcribe(audioURL: audioURL, model: model)
-        case .elevenLabs:
-            text = try await elevenLabsService.transcribe(audioURL: audioURL, model: model)
-        case .deepgram:
-            text = try await deepgramService.transcribe(audioURL: audioURL, model: model)
-        case .mistral:
-            text = try await mistralService.transcribe(audioURL: audioURL, model: model)
-        case .custom:
-            guard let customModel = model as? CustomCloudModel else {
-                throw CloudTranscriptionError.unsupportedProvider
-            }
-            text = try await openAICompatibleService.transcribe(audioURL: audioURL, model: customModel)
-        default:
-            throw CloudTranscriptionError.unsupportedProvider
-        }
-        
-        if UserDefaults.standard.object(forKey: "IsTextFormattingEnabled") as? Bool ?? true {
-            text = WhisperTextFormatter.format(text)
-        }
-        
-        return text
+        // Cloud transcription is no longer supported - only local models are available
+        throw CloudTranscriptionError.unsupportedProvider
     }
-
-    
-
 } 

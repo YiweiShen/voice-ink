@@ -140,7 +140,10 @@ struct LocalModelCardView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-            } else {
+            }
+            
+            // Always show download button for local models when not downloaded
+            if !isDownloaded {
                 Button(action: downloadAction) {
                     HStack(spacing: 4) {
                         Text(isDownloading ? "Downloading..." : "Download")
