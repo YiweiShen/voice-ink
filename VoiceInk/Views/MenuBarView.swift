@@ -20,32 +20,6 @@ struct MenuBarView: View {
                 }
             }
             
-            Toggle("AI Enhancement", isOn: $enhancementService.isEnhancementEnabled)
-            
-            Menu {
-                ForEach(enhancementService.allPrompts) { prompt in
-                    Button {
-                        enhancementService.setActivePrompt(prompt)
-                    } label: {
-                        HStack {
-                            Image(systemName: prompt.icon.rawValue)
-                                .foregroundColor(.accentColor)
-                            Text(prompt.title)
-                            if enhancementService.selectedPromptId == prompt.id {
-                                Spacer()
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                HStack {
-                    Text("Prompt: \(enhancementService.activePrompt?.title ?? "None")")
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 10))
-                }
-            }
-            .disabled(!enhancementService.isEnhancementEnabled)
             
             Menu {
                 ForEach(aiService.connectedProviders, id: \.self) { provider in
@@ -110,8 +84,6 @@ struct MenuBarView: View {
             
             LanguageSelectionView(whisperState: whisperState, displayMode: .menuItem, whisperPrompt: whisperState.whisperPrompt)
             
-            Toggle("Use Clipboard Context", isOn: $enhancementService.useClipboardContext)
-                .disabled(!enhancementService.isEnhancementEnabled)
             
             
             Menu("Additional") {
