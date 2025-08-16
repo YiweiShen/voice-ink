@@ -8,6 +8,11 @@ extension WhisperState {
         if let savedModelName = UserDefaults.standard.string(forKey: "CurrentTranscriptionModel"),
            let savedModel = allAvailableModels.first(where: { $0.name == savedModelName }) {
             currentTranscriptionModel = savedModel
+        } else {
+            // Set Large v3 Turbo as default model when no model is saved
+            if let defaultModel = allAvailableModels.first(where: { $0.name == "ggml-large-v3-turbo" }) {
+                setDefaultTranscriptionModel(defaultModel)
+            }
         }
     }
 

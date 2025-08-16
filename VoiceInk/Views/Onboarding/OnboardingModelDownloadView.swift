@@ -9,7 +9,7 @@ struct OnboardingModelDownloadView: View {
     @State private var isModelSet = false
     @State private var showTutorial = false
     
-    private let turboModel = PredefinedModels.models.first { $0.name == "ggml-large-v3-turbo-q5_0" } as! LocalModel
+    private let turboModel = PredefinedModels.models.first { $0.name == "ggml-large-v3-turbo" } as! LocalModel
     
     var body: some View {
         ZStack {
