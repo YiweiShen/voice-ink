@@ -5,7 +5,6 @@ import LaunchAtLogin
 import AVFoundation
 
 struct SettingsView: View {
-    @EnvironmentObject private var updaterViewModel: UpdaterViewModel
     @EnvironmentObject private var menuBarManager: MenuBarManager
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @EnvironmentObject private var whisperState: WhisperState
@@ -222,23 +221,6 @@ struct SettingsView: View {
                     }
                 }
                 
-                SettingsSection(
-                    icon: "arrow.triangle.2.circlepath",
-                    title: "Updates",
-                    subtitle: "Keep VoiceInk up to date"
-                ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("VoiceInk automatically checks for updates on launch and every other day.")
-                            .settingsDescription()
-                        
-                        Button("Check for Updates Now") {
-                            updaterViewModel.checkForUpdates()
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .disabled(!updaterViewModel.canCheckForUpdates)
-                    }
-                }
 
                 SettingsSection(
                     icon: "arrow.counterclockwise",

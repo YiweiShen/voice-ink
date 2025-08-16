@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import Sparkle
 import AppKit
 import OSLog
 
@@ -11,7 +10,6 @@ struct VoiceInkApp: App {
 
     @StateObject private var whisperState: WhisperState
     @StateObject private var hotkeyManager: HotkeyManager
-    @StateObject private var updaterViewModel: UpdaterViewModel
     @StateObject private var menuBarManager: MenuBarManager
     @StateObject private var aiService = AIService()
     @StateObject private var enhancementService: AIEnhancementService
@@ -56,8 +54,6 @@ struct VoiceInkApp: App {
         let aiService = AIService()
         _aiService = StateObject(wrappedValue: aiService)
 
-        let updaterViewModel = UpdaterViewModel()
-        _updaterViewModel = StateObject(wrappedValue: updaterViewModel)
 
         let enhancementService = AIEnhancementService(aiService: aiService, modelContext: container.mainContext)
         _enhancementService = StateObject(wrappedValue: enhancementService)
@@ -69,7 +65,6 @@ struct VoiceInkApp: App {
         _hotkeyManager = StateObject(wrappedValue: hotkeyManager)
 
         let menuBarManager = MenuBarManager(
-            updaterViewModel: updaterViewModel,
             whisperState: whisperState,
             container: container,
             enhancementService: enhancementService,
@@ -90,14 +85,11 @@ struct VoiceInkApp: App {
                 ContentView()
                     .environmentObject(whisperState)
                     .environmentObject(hotkeyManager)
-                    .environmentObject(updaterViewModel)
                     .environmentObject(menuBarManager)
                     .environmentObject(aiService)
                     .environmentObject(enhancementService)
                     .modelContainer(container)
                     .onAppear {
-                        updaterViewModel.silentlyCheckForUpdates()
-                        AnnouncementsService.shared.start()
 
                         // Start the transcription auto-cleanup service (handles immediate and scheduled transcript deletion)
                         transcriptionAutoCleanupService.startMonitoring(modelContext: container.mainContext)
@@ -111,7 +103,6 @@ struct VoiceInkApp: App {
                         WindowManager.shared.configureWindow(window)
                     })
                     .onDisappear {
-                        AnnouncementsService.shared.stop()
                         whisperState.unloadModel()
 
                         // Stop the transcription auto-cleanup service
@@ -135,18 +126,12 @@ struct VoiceInkApp: App {
                     })
             }
         }
-        .commands {
-            CommandGroup(after: .appInfo) {
-                CheckForUpdatesView(updaterViewModel: updaterViewModel)
-            }
-        }
 
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(whisperState)
                 .environmentObject(hotkeyManager)
                 .environmentObject(menuBarManager)
-                .environmentObject(updaterViewModel)
                 .environmentObject(aiService)
                 .environmentObject(enhancementService)
         } label: {
@@ -171,41 +156,7 @@ struct VoiceInkApp: App {
     }
 }
 
-class UpdaterViewModel: ObservableObject {
-    private let updaterController: SPUStandardUpdaterController
 
-    @Published var canCheckForUpdates = false
-
-    init() {
-        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
-
-        // Enable automatic update checking
-        updaterController.updater.automaticallyChecksForUpdates = true
-        updaterController.updater.updateCheckInterval = 24 * 60 * 60
-
-        updaterController.updater.publisher(for: \.canCheckForUpdates)
-            .assign(to: &$canCheckForUpdates)
-    }
-
-    func checkForUpdates() {
-        // This is for manual checks - will show UI
-        updaterController.checkForUpdates(nil)
-    }
-
-    func silentlyCheckForUpdates() {
-        // This checks for updates in the background without showing UI unless an update is found
-        updaterController.updater.checkForUpdatesInBackground()
-    }
-}
-
-struct CheckForUpdatesView: View {
-    @ObservedObject var updaterViewModel: UpdaterViewModel
-
-    var body: some View {
-        Button("Check for Updates…", action: updaterViewModel.checkForUpdates)
-            .disabled(!updaterViewModel.canCheckForUpdates)
-    }
-}
 
 struct WindowAccessor: NSViewRepresentable {
     let callback: (NSWindow) -> Void

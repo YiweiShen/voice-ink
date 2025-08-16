@@ -70,7 +70,6 @@ If you encounter any issues or have questions, please:
 
 ### Essential Dependencies
 
-- [Sparkle](https://github.com/sparkle-project/Sparkle) - Keeping VoiceInk up to date
 - [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) - User-customizable keyboard shortcuts
 - [LaunchAtLogin](https://github.com/sindresorhus/LaunchAtLogin) - Launch at login functionality
 - [MediaRemoteAdapter](https://github.com/ejbills/mediaremote-adapter) - Media playback control during recording
