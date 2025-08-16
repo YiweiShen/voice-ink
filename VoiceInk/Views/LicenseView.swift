@@ -8,40 +8,13 @@ struct LicenseView: View {
             Text("License Management")
                 .font(.headline)
             
-            if case .licensed = licenseViewModel.licenseState {
-                VStack(spacing: 10) {
-                    Text("Premium Features Activated")
-                        .foregroundColor(.green)
-                    
-                    Button(role: .destructive, action: {
-                        licenseViewModel.removeLicense()
-                    }) {
-                        Text("Remove License")
-                    }
-                }
-            } else {
-                TextField("Enter License Key", text: $licenseViewModel.licenseKey)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(maxWidth: 300)
+            VStack(spacing: 10) {
+                Text("Premium Features Always Active")
+                    .foregroundColor(.green)
                 
-                Button(action: {
-                    Task {
-                        await licenseViewModel.validateLicense()
-                    }
-                }) {
-                    if licenseViewModel.isValidating {
-                        ProgressView()
-                    } else {
-                        Text("Activate License")
-                    }
-                }
-                .disabled(licenseViewModel.isValidating)
-            }
-            
-            if let message = licenseViewModel.validationMessage {
-                Text(message)
-                    .foregroundColor(licenseViewModel.licenseState == .licensed ? .green : .red)
+                Text("All features are available without license restrictions.")
                     .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
         .padding()

@@ -1,5 +1,6 @@
 import SwiftUI
 
+// Deprecated: License checks removed - this view no longer displays
 struct TrialMessageView: View {
     let message: String
     let type: MessageType
@@ -12,44 +13,8 @@ struct TrialMessageView: View {
     }
     
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(iconColor)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(message)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 12) {
-                Button(action: {
-                    onAddLicenseKey?()
-                }) {
-                    Text("Enter License")
-                        .font(.system(size: 13, weight: .medium))
-                }
-                .buttonStyle(.bordered)
-
-                Button(action: {
-                    if let url = URL(string: "https://tryvoiceink.com/buy") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }) {
-                    Text("Buy License")
-                        .font(.system(size: 13, weight: .medium))
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        .padding()
-        .background(backgroundColor)
-        .cornerRadius(12)
+        // No longer show trial messages - always licensed
+        EmptyView()
     }
     
     private var icon: String {
