@@ -5,7 +5,6 @@ struct MenuBarView: View {
     @EnvironmentObject var whisperState: WhisperState
     @EnvironmentObject var hotkeyManager: HotkeyManager
     @EnvironmentObject var menuBarManager: MenuBarManager
-    @EnvironmentObject var updaterViewModel: UpdaterViewModel
     @EnvironmentObject var enhancementService: AIEnhancementService
     @EnvironmentObject var aiService: AIService
     @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
@@ -137,17 +136,6 @@ struct MenuBarView: View {
                 .onChange(of: launchAtLoginEnabled) { oldValue, newValue in
                     LaunchAtLogin.isEnabled = newValue
                 }
-            
-            Divider()
-            
-            Button("Check for Updates") {
-                updaterViewModel.checkForUpdates()
-            }
-            .disabled(!updaterViewModel.canCheckForUpdates)
-            
-            Button("Help and Support") {
-                EmailSupport.openSupportEmail()
-            }
             
             Divider()
             
