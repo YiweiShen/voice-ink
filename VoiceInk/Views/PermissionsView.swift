@@ -6,7 +6,6 @@ import KeyboardShortcuts
 class PermissionManager: ObservableObject {
     @Published var audioPermissionStatus = AVCaptureDevice.authorizationStatus(for: .audio)
     @Published var isAccessibilityEnabled = false
-    @Published var isScreenRecordingEnabled = false
     @Published var isKeyboardShortcutSet = false
     
     init() {
@@ -38,7 +37,6 @@ class PermissionManager: ObservableObject {
     
     func checkAllPermissions() {
         checkAccessibilityPermissions()
-        checkScreenRecordingPermission()
         checkAudioPermissionStatus()
         checkKeyboardShortcut()
     }
@@ -51,15 +49,6 @@ class PermissionManager: ObservableObject {
         }
     }
     
-    func checkScreenRecordingPermission() {
-        DispatchQueue.main.async {
-            self.isScreenRecordingEnabled = CGPreflightScreenCaptureAccess()
-        }
-    }
-    
-    func requestScreenRecordingPermission() {
-        CGRequestScreenCaptureAccess()
-    }
     
     func checkAudioPermissionStatus() {
         DispatchQueue.main.async {
@@ -263,22 +252,6 @@ struct PermissionsView: View {
                         checkPermission: { permissionManager.checkAccessibilityPermissions() }
                     )
                     
-                    // Screen Recording Permission
-                    PermissionCard(
-                        icon: "rectangle.on.rectangle",
-                        title: "Screen Recording Access",
-                        description: "Allow VoiceInk to understand context from your screen for transcript Enhancement",
-                        isGranted: permissionManager.isScreenRecordingEnabled,
-                        buttonTitle: "Request Permission",
-                        buttonAction: {
-                            permissionManager.requestScreenRecordingPermission()
-                            // After requesting, open system preferences as fallback
-                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        },
-                        checkPermission: { permissionManager.checkScreenRecordingPermission() }
-                    )
                 }
             }
             .padding(24)
