@@ -28,12 +28,6 @@ class AIEnhancementService: ObservableObject {
         }
     }
     
-    @Published var useScreenCaptureContext: Bool {
-        didSet {
-            UserDefaults.standard.set(useScreenCaptureContext, forKey: "useScreenCaptureContext")
-            NotificationCenter.default.post(name: .AppSettingsDidChange, object: nil)
-        }
-    }
     
     @Published var customPrompts: [CustomPrompt] {
         didSet {
@@ -60,7 +54,6 @@ class AIEnhancementService: ObservableObject {
     }
     
     private let aiService: AIService
-    private let screenCaptureService: ScreenCaptureService
     private let baseTimeout: TimeInterval = 30
     private let rateLimitInterval: TimeInterval = 1.0
     private var lastRequestTime: Date?
@@ -69,11 +62,9 @@ class AIEnhancementService: ObservableObject {
     init(aiService: AIService = AIService(), modelContext: ModelContext) {
         self.aiService = aiService
         self.modelContext = modelContext
-        self.screenCaptureService = ScreenCaptureService()
         
         self.isEnhancementEnabled = UserDefaults.standard.bool(forKey: "isAIEnhancementEnabled")
         self.useClipboardContext = UserDefaults.standard.bool(forKey: "useClipboardContext")
-        self.useScreenCaptureContext = UserDefaults.standard.bool(forKey: "useScreenCaptureContext")
         
         self.customPrompts = PromptMigrationService.migratePromptsIfNeeded()
         
@@ -146,16 +137,8 @@ class AIEnhancementService: ObservableObject {
             ""
         }
         
-        let screenCaptureContext = if useScreenCaptureContext,
-                                   let capturedText = screenCaptureService.lastCapturedText,
-                                   !capturedText.isEmpty {
-            "\n\nActive Window Context: \(capturedText)"
-        } else {
-            ""
-        }
-        
-        let contextSection = if !clipboardContext.isEmpty || !screenCaptureContext.isEmpty {
-            "\n\n<CONTEXT_INFORMATION>\(clipboardContext)\(screenCaptureContext)\n</CONTEXT_INFORMATION>"
+        let contextSection = if !clipboardContext.isEmpty {
+            "\n\n<CONTEXT_INFORMATION>\(clipboardContext)\n</CONTEXT_INFORMATION>"
         } else {
             ""
         }
@@ -209,106 +192,8 @@ class AIEnhancementService: ObservableObject {
             }
         }
         
-        try await waitForRateLimit()
-        
-        switch aiService.selectedProvider {
-        case .anthropic:
-            let requestBody: [String: Any] = [
-                "model": aiService.currentModel,
-                "max_tokens": 8192,
-                "system": systemMessage,
-                "messages": [
-                    ["role": "user", "content": formattedText]
-                ]
-            ]
-            
-            var request = URLRequest(url: URL(string: aiService.selectedProvider.baseURL)!)
-            request.httpMethod = "POST"
-            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.addValue(aiService.apiKey, forHTTPHeaderField: "x-api-key")
-            request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-            request.timeoutInterval = baseTimeout
-            request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
-            
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw EnhancementError.invalidResponse
-                }
-                
-                if httpResponse.statusCode == 200 {
-                    guard let jsonResponse = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                          let content = jsonResponse["content"] as? [[String: Any]],
-                          let firstContent = content.first,
-                          let enhancedText = firstContent["text"] as? String else {
-                        throw EnhancementError.enhancementFailed
-                    }
-                    
-                    let filteredText = AIEnhancementOutputFilter.filter(enhancedText.trimmingCharacters(in: .whitespacesAndNewlines))
-                    return filteredText
-                } else {
-                    let errorString = String(data: data, encoding: .utf8) ?? "Could not decode error response."
-                    throw EnhancementError.customError("HTTP \(httpResponse.statusCode): \(errorString)")
-                }
-                
-            } catch let error as EnhancementError {
-                throw error
-            } catch {
-                throw EnhancementError.customError(error.localizedDescription)
-            }
-            
-        default:
-            let url = URL(string: aiService.selectedProvider.baseURL)!
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.addValue("Bearer \(aiService.apiKey)", forHTTPHeaderField: "Authorization")
-            request.timeoutInterval = baseTimeout
-
-            let messages: [[String: Any]] = [
-                ["role": "system", "content": systemMessage],
-                ["role": "user", "content": formattedText]
-            ]
-
-            let requestBody: [String: Any] = [
-                "model": aiService.currentModel,
-                "messages": messages,
-                "temperature": aiService.currentModel.lowercased().hasPrefix("gpt-5") ? 1.0 : 0.3,
-                "stream": false
-            ]
-
-            request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
-
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw EnhancementError.invalidResponse
-                }
-
-                if httpResponse.statusCode == 200 {
-                    guard let jsonResponse = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                          let choices = jsonResponse["choices"] as? [[String: Any]],
-                          let firstChoice = choices.first,
-                          let message = firstChoice["message"] as? [String: Any],
-                          let enhancedText = message["content"] as? String else {
-                        throw EnhancementError.enhancementFailed
-                    }
-
-                    let filteredText = AIEnhancementOutputFilter.filter(enhancedText.trimmingCharacters(in: .whitespacesAndNewlines))
-                    return filteredText
-                } else {
-                    let errorString = String(data: data, encoding: .utf8) ?? "Could not decode error response."
-                    throw EnhancementError.customError("HTTP \(httpResponse.statusCode): \(errorString)")
-                }
-
-            } catch let error as EnhancementError {
-                throw error
-            } catch {
-                throw EnhancementError.customError(error.localizedDescription)
-            }
-        }
+        // Since we only support Ollama now, this code path should not be reached
+        throw EnhancementError.customError("Only Ollama is supported for AI enhancement")
     }
     
     func enhance(_ text: String) async throws -> (String, TimeInterval) {
@@ -325,15 +210,6 @@ class AIEnhancementService: ObservableObject {
         }
     }
     
-    func captureScreenContext() async {
-        guard useScreenCaptureContext else { return }
-        
-        if let capturedText = await screenCaptureService.captureAndExtractText() {
-            await MainActor.run {
-                self.objectWillChange.send()
-            }
-        }
-    }
     
     func addPrompt(title: String, promptText: String, icon: PromptIcon = .documentFill, description: String? = nil, triggerWords: [String] = []) {
         let newPrompt = CustomPrompt(title: title, promptText: promptText, icon: icon, description: description, isPredefined: false, triggerWords: triggerWords)

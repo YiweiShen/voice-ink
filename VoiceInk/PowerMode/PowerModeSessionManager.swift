@@ -3,7 +3,6 @@ import AppKit
 
 struct ApplicationState: Codable {
     var isEnhancementEnabled: Bool
-    var useScreenCaptureContext: Bool
     var selectedPromptId: String?
     var selectedAIProvider: String?
     var selectedAIModel: String?
@@ -43,7 +42,6 @@ class PowerModeSessionManager {
 
         let originalState = ApplicationState(
             isEnhancementEnabled: enhancementService.isEnhancementEnabled,
-            useScreenCaptureContext: enhancementService.useScreenCaptureContext,
             selectedPromptId: enhancementService.selectedPromptId?.uuidString,
             selectedAIProvider: enhancementService.getAIService()?.selectedProvider.rawValue,
             selectedAIModel: enhancementService.getAIService()?.currentModel,
@@ -84,7 +82,6 @@ class PowerModeSessionManager {
 
         let updatedState = ApplicationState(
             isEnhancementEnabled: enhancementService.isEnhancementEnabled,
-            useScreenCaptureContext: enhancementService.useScreenCaptureContext,
             selectedPromptId: enhancementService.selectedPromptId?.uuidString,
             selectedAIProvider: enhancementService.getAIService()?.selectedProvider.rawValue,
             selectedAIModel: enhancementService.getAIService()?.currentModel,
@@ -101,7 +98,6 @@ class PowerModeSessionManager {
 
         await MainActor.run {
             enhancementService.isEnhancementEnabled = config.isAIEnhancementEnabled
-            enhancementService.useScreenCaptureContext = config.useScreenCapture
 
             if config.isAIEnhancementEnabled {
                 if let promptId = config.selectedPrompt, let uuid = UUID(uuidString: promptId) {
@@ -141,7 +137,6 @@ class PowerModeSessionManager {
 
         await MainActor.run {
             enhancementService.isEnhancementEnabled = state.isEnhancementEnabled
-            enhancementService.useScreenCaptureContext = state.useScreenCaptureContext
             enhancementService.selectedPromptId = state.selectedPromptId.flatMap(UUID.init)
 
             if let aiService = enhancementService.getAIService() {

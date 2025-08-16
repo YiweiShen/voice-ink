@@ -5,30 +5,24 @@ import KeyboardShortcuts
 // ViewType enum with all cases
 enum ViewType: String, CaseIterable {
     case metrics = "Dashboard"
-    case transcribeAudio = "Transcribe Audio"
     case history = "History"
     case models = "AI Models"
-    case enhancement = "Enhancement"
     case powerMode = "Power Mode"
     case permissions = "Permissions"
     case audioInput = "Audio Input"
     case dictionary = "Dictionary"
     case settings = "Settings"
-    case license = "VoiceInk Pro"
     
     var icon: String {
         switch self {
         case .metrics: return "gauge.medium"
-        case .transcribeAudio: return "waveform.circle.fill"
         case .history: return "doc.text.fill"
         case .models: return "brain.head.profile"
-        case .enhancement: return "wand.and.stars"
         case .powerMode: return "sparkles.square.fill.on.square"
         case .permissions: return "shield.fill"
         case .audioInput: return "mic.fill"
         case .dictionary: return "character.book.closed.fill"
         case .settings: return "gearshape.fill"
-        case .license: return "checkmark.seal.fill"
         }
     }
 }
@@ -55,7 +49,6 @@ struct DynamicSidebar: View {
     @Binding var selectedView: ViewType
     @Binding var hoveredView: ViewType?
     @Environment(\.colorScheme) private var colorScheme
-    @StateObject private var licenseViewModel = LicenseViewModel()
     @Namespace private var buttonAnimation
 
     var body: some View {
@@ -73,15 +66,7 @@ struct DynamicSidebar: View {
                 Text("VoiceInk")
                     .font(.system(size: 14, weight: .semibold))
                 
-                if case .licensed = licenseViewModel.licenseState {
-                    Text("PRO")
-                        .font(.system(size: 9, weight: .heavy))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Color.blue)
-                        .cornerRadius(4)
-                }
+                // PRO badge removed - no longer showing trial/license status
                 
                 Spacer()
             }
@@ -163,14 +148,12 @@ struct ContentView: View {
     @State private var hoveredView: ViewType?
     @State private var hasLoadedData = false
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-    @StateObject private var licenseViewModel = LicenseViewModel()
     
     private var isSetupComplete: Bool {
         hasLoadedData &&
         whisperState.currentTranscriptionModel != nil &&
         hotkeyManager.selectedHotkey1 != .none &&
-        AXIsProcessTrusted() &&
-        CGPreflightScreenCaptureAccess()
+        AXIsProcessTrusted()
     }
 
     var body: some View {
@@ -203,18 +186,12 @@ struct ContentView: View {
                 case "AI Models":
                     print("ContentView: Navigating to AI Models")
                     selectedView = .models
-                case "VoiceInk Pro":
-                    print("ContentView: Navigating to VoiceInk Pro")
-                    selectedView = .license
                 case "History":
                     print("ContentView: Navigating to History")
                     selectedView = .history
                 case "Permissions":
                     print("ContentView: Navigating to Permissions")
                     selectedView = .permissions
-                case "Enhancement":
-                    print("ContentView: Navigating to Enhancement")
-                    selectedView = .enhancement
                 default:
                     print("ContentView: No matching destination found for: \(destination)")
                     break
@@ -237,10 +214,6 @@ struct ContentView: View {
             }
         case .models:
             ModelManagementView(whisperState: whisperState)
-        case .enhancement:
-            EnhancementSettingsView()
-        case .transcribeAudio:
-            AudioTranscribeView()
         case .history:
             TranscriptionHistoryView()
         case .audioInput:
@@ -252,8 +225,6 @@ struct ContentView: View {
         case .settings:
             SettingsView()
                 .environmentObject(whisperState)
-        case .license:
-            LicenseManagementView()
         case .permissions:
             PermissionsView()
         }

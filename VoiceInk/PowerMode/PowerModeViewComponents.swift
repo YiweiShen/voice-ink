@@ -260,22 +260,6 @@ struct ConfigurationRow: View {
                     }
                     
                     if config.isAIEnhancementEnabled {
-                        if config.useScreenCapture {
-                            HStack(spacing: 4) {
-                                Image(systemName: "camera.viewfinder")
-                                    .font(.system(size: 10))
-                                Text("Context Awareness")
-                                    .font(.caption)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Capsule()
-                                .fill(Color(NSColor.controlBackgroundColor)))
-                            .overlay(
-                                Capsule()
-                                    .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
-                            )
-                        }
                         
                         HStack(spacing: 4) {
                             Image(systemName: "sparkles")

@@ -49,14 +49,6 @@ struct EnhancementSettingsView: View {
                                     .foregroundColor(enhancementService.isEnhancementEnabled ? .secondary : .secondary.opacity(0.5))
                             }
                             
-                            VStack(alignment: .leading, spacing: 4) {
-                                Toggle("Context Awareness", isOn: $enhancementService.useScreenCaptureContext)
-                                    .toggleStyle(.switch)
-                                    .disabled(!enhancementService.isEnhancementEnabled)
-                                Text("Learn what is on the screen to understand the context")
-                                    .font(.caption)
-                                    .foregroundColor(enhancementService.isEnhancementEnabled ? .secondary : .secondary.opacity(0.5))
-                            }
                         }
                     }
                     .padding()

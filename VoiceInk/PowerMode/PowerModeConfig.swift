@@ -10,7 +10,6 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
     var selectedPrompt: String?
     var selectedTranscriptionModelName: String?
     var selectedLanguage: String?
-    var useScreenCapture: Bool
     var selectedAIProvider: String?
     var selectedAIModel: String?
     var isAutoSendEnabled: Bool = false
@@ -18,14 +17,14 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
     var isDefault: Bool = false
         
     enum CodingKeys: String, CodingKey {
-        case id, name, emoji, appConfigs, urlConfigs, isAIEnhancementEnabled, selectedPrompt, selectedLanguage, useScreenCapture, selectedAIProvider, selectedAIModel, isAutoSendEnabled, isEnabled, isDefault
+        case id, name, emoji, appConfigs, urlConfigs, isAIEnhancementEnabled, selectedPrompt, selectedLanguage, selectedAIProvider, selectedAIModel, isAutoSendEnabled, isEnabled, isDefault
         case selectedWhisperModel
         case selectedTranscriptionModelName
     }
     
     init(id: UUID = UUID(), name: String, emoji: String, appConfigs: [AppConfig]? = nil,
          urlConfigs: [URLConfig]? = nil, isAIEnhancementEnabled: Bool, selectedPrompt: String? = nil,
-         selectedTranscriptionModelName: String? = nil, selectedLanguage: String? = nil, useScreenCapture: Bool = false,
+         selectedTranscriptionModelName: String? = nil, selectedLanguage: String? = nil,
          selectedAIProvider: String? = nil, selectedAIModel: String? = nil, isAutoSendEnabled: Bool = false, isEnabled: Bool = true, isDefault: Bool = false) {
         self.id = id
         self.name = name
@@ -34,7 +33,6 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
         self.urlConfigs = urlConfigs
         self.isAIEnhancementEnabled = isAIEnhancementEnabled
         self.selectedPrompt = selectedPrompt
-        self.useScreenCapture = useScreenCapture
         self.isAutoSendEnabled = isAutoSendEnabled
         self.selectedAIProvider = selectedAIProvider ?? UserDefaults.standard.string(forKey: "selectedAIProvider")
         self.selectedAIModel = selectedAIModel
@@ -54,7 +52,6 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
         isAIEnhancementEnabled = try container.decode(Bool.self, forKey: .isAIEnhancementEnabled)
         selectedPrompt = try container.decodeIfPresent(String.self, forKey: .selectedPrompt)
         selectedLanguage = try container.decodeIfPresent(String.self, forKey: .selectedLanguage)
-        useScreenCapture = try container.decode(Bool.self, forKey: .useScreenCapture)
         selectedAIProvider = try container.decodeIfPresent(String.self, forKey: .selectedAIProvider)
         selectedAIModel = try container.decodeIfPresent(String.self, forKey: .selectedAIModel)
         isAutoSendEnabled = try container.decodeIfPresent(Bool.self, forKey: .isAutoSendEnabled) ?? false
@@ -80,7 +77,6 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
         try container.encode(isAIEnhancementEnabled, forKey: .isAIEnhancementEnabled)
         try container.encodeIfPresent(selectedPrompt, forKey: .selectedPrompt)
         try container.encodeIfPresent(selectedLanguage, forKey: .selectedLanguage)
-        try container.encode(useScreenCapture, forKey: .useScreenCapture)
         try container.encodeIfPresent(selectedAIProvider, forKey: .selectedAIProvider)
         try container.encodeIfPresent(selectedAIModel, forKey: .selectedAIModel)
         try container.encode(isAutoSendEnabled, forKey: .isAutoSendEnabled)
