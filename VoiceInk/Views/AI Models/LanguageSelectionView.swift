@@ -8,14 +8,14 @@ enum LanguageDisplayMode {
 
 struct LanguageSelectionView: View {
     @ObservedObject var whisperState: WhisperState
-    @AppStorage("SelectedLanguage") private var selectedLanguage: String = "en"
+    @AppStorage("SelectedLanguage") private var selectedLanguage: String = "auto"
     // Add display mode parameter with full as the default
     var displayMode: LanguageDisplayMode = .full
     @ObservedObject var whisperPrompt: WhisperPrompt
 
     private func updateLanguage(_ language: String) {
-        // Update UI state - the UserDefaults updating is now automatic with @AppStorage
-        selectedLanguage = language
+        // Always use auto-detect instead of the selected language
+        selectedLanguage = "auto"
 
         // Force the prompt to update for the new language
         whisperPrompt.updateTranscriptionPrompt()
@@ -47,12 +47,8 @@ struct LanguageSelectionView: View {
     }
 
     var body: some View {
-        switch displayMode {
-        case .full:
-            fullView
-        case .menuItem:
-            menuItemView
-        }
+        // Language selection is now always auto-detect, so return empty view
+        EmptyView()
     }
 
     // The original full view layout for settings page

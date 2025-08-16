@@ -31,7 +31,6 @@ struct ModelManagementView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 defaultModelSection
-                languageSelectionSection
                 availableModelsSection
             }
             .padding(40)
@@ -63,9 +62,6 @@ struct ModelManagementView: View {
         .cornerRadius(10)
     }
     
-    private var languageSelectionSection: some View {
-        LanguageSelectionView(whisperState: whisperState, displayMode: .full, whisperPrompt: whisperPrompt)
-    }
     
     private var availableModelsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
