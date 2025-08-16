@@ -11,7 +11,6 @@ class MenuBarManager: ObservableObject {
         }
     }
     
-    private var updaterViewModel: UpdaterViewModel
     private var whisperState: WhisperState
     private var container: ModelContainer
     private var enhancementService: AIEnhancementService
@@ -19,14 +18,12 @@ class MenuBarManager: ObservableObject {
     private var hotkeyManager: HotkeyManager
     private var mainWindow: NSWindow?  // Store window reference
     
-    init(updaterViewModel: UpdaterViewModel, 
-         whisperState: WhisperState, 
+    init(whisperState: WhisperState, 
          container: ModelContainer,
          enhancementService: AIEnhancementService,
          aiService: AIService,
          hotkeyManager: HotkeyManager) {
         self.isMenuBarOnly = UserDefaults.standard.bool(forKey: "IsMenuBarOnly")
-        self.updaterViewModel = updaterViewModel
         self.whisperState = whisperState
         self.container = container
         self.enhancementService = enhancementService
@@ -109,7 +106,6 @@ class MenuBarManager: ObservableObject {
             .environmentObject(whisperState)
             .environmentObject(hotkeyManager)
             .environmentObject(self)
-            .environmentObject(updaterViewModel)
             .environmentObject(enhancementService)
             .environmentObject(aiService)
             .environment(\.modelContext, ModelContext(container))
