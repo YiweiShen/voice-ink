@@ -94,7 +94,6 @@ struct TimeEfficiencyView: View {
         HStack {
             timeSavedView
             Spacer()
-            reportIssueButton
         }
         .padding(.horizontal, 24)
     }
@@ -112,40 +111,6 @@ struct TimeEfficiencyView: View {
         }
     }
     
-    private var reportIssueButton: some View {
-        Button(action: {
-            EmailSupport.openSupportEmail()
-        }) {
-            HStack(alignment: .center, spacing: 12) {
-                // Left icon
-                Image(systemName: "exclamationmark.bubble.fill")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(.white)
-                
-                // Center text
-                Text("Feedback or Issues?")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
-                
-                Spacer(minLength: 8)
-                
-                // Right button
-                Text("Report")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Color.accentColor)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(.white))
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .background(accentGradient)
-            .cornerRadius(10)
-        }
-        .buttonStyle(.plain)
-        .shadow(color: Color.accentColor.opacity(0.2), radius: 3, y: 1)
-        .frame(maxWidth: 280)
-    }
     
     private var efficiencyGradient: LinearGradient {
         LinearGradient(
