@@ -29,7 +29,7 @@ class WhisperState: NSObject, ObservableObject {
     @Published var shouldCancelRecording = false
 
 
-    @Published var recorderType: String = UserDefaults.standard.string(forKey: "RecorderType") ?? "mini" {
+    @Published var recorderType: String = UserDefaults.standard.string(forKey: "RecorderType") ?? "notch" {
         didSet {
             UserDefaults.standard.set(recorderType, forKey: "RecorderType")
         }
