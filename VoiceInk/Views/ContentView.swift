@@ -64,8 +64,6 @@ struct DynamicSidebar: View {
                 Text("VoiceInk")
                     .font(.system(size: 14, weight: .semibold))
                 
-                // PRO badge removed - no longer showing trial/license status
-                
                 Spacer()
             }
             .padding(.horizontal, 16)
@@ -142,7 +140,7 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var hotkeyManager: HotkeyManager
-    @State private var selectedView: ViewType = .metrics
+    @State private var selectedView: ViewType = .settings
     @State private var hoveredView: ViewType?
     @State private var hasLoadedData = false
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
@@ -178,6 +176,9 @@ struct ContentView: View {
             if let destination = notification.userInfo?["destination"] as? String {
                 print("ContentView: Destination received: \(destination)")
                 switch destination {
+                case "Dashboard":
+                    print("ContentView: Navigating to Dashboard")
+                    selectedView = .metrics
                 case "Settings":
                     print("ContentView: Navigating to Settings")
                     selectedView = .settings

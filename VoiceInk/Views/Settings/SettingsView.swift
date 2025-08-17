@@ -9,241 +9,270 @@ struct SettingsView: View {
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var enhancementService: AIEnhancementService
-    @StateObject private var deviceManager = AudioDeviceManager.shared
     @ObservedObject private var mediaController = MediaController.shared
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
-    @State private var showResetOnboardingAlert = false
-    @State private var currentShortcut = KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder)
     @State private var isCustomCancelEnabled = false
+    @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
 
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
+                // MARK: - Recording & Shortcuts
                 SettingsSection(
                     icon: "command.circle",
-                    title: "Recording Shortcuts",
-                    subtitle: "Set up keyboard shortcuts to start recording quickly"
+                    title: "Recording & Shortcuts",
+                    subtitle: "Keyboard shortcuts for recording and pasting transcriptions"
                 ) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        hotkeyView(
-                            title: "Hotkey 1",
-                            binding: $hotkeyManager.selectedHotkey1,
-                            shortcutName: .toggleMiniRecorder
-                        )
-
-                        if hotkeyManager.selectedHotkey2 != .none {
-                            Divider()
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Recording Hotkeys
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Recording Hotkeys")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.primary)
+                            
                             hotkeyView(
-                                title: "Hotkey 2",
-                                binding: $hotkeyManager.selectedHotkey2,
-                                shortcutName: .toggleMiniRecorder2,
-                                isRemovable: true,
-                                onRemove: {
-                                    withAnimation { hotkeyManager.selectedHotkey2 = .none }
-                                }
+                                title: "Primary Hotkey",
+                                binding: $hotkeyManager.selectedHotkey1,
+                                shortcutName: .toggleMiniRecorder
                             )
-                        }
 
-                        if hotkeyManager.selectedHotkey1 != .none && hotkeyManager.selectedHotkey2 == .none {
-                            HStack {
-                                Spacer()
-                                Button(action: {
-                                    withAnimation { hotkeyManager.selectedHotkey2 = .rightOption }
-                                }) {
-                                    Label("Add another hotkey", systemImage: "plus.circle.fill")
+                            if hotkeyManager.selectedHotkey2 != .none {
+                                hotkeyView(
+                                    title: "Secondary Hotkey",
+                                    binding: $hotkeyManager.selectedHotkey2,
+                                    shortcutName: .toggleMiniRecorder2,
+                                    isRemovable: true,
+                                    onRemove: {
+                                        withAnimation { hotkeyManager.selectedHotkey2 = .none }
+                                    }
+                                )
+                            }
+
+                            if hotkeyManager.selectedHotkey1 != .none && hotkeyManager.selectedHotkey2 == .none {
+                                HStack {
+                                    Spacer()
+                                    Button(action: {
+                                        withAnimation { hotkeyManager.selectedHotkey2 = .rightOption }
+                                    }) {
+                                        Label("Add secondary hotkey", systemImage: "plus.circle")
+                                            .font(.system(size: 13))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .foregroundColor(.accentColor)
                                 }
-                                .buttonStyle(.plain)
-                                .foregroundColor(.accentColor)
                             }
                         }
-
+                        
+                        Divider()
+                        
+                        // Cancel Recording
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Toggle(isOn: $isCustomCancelEnabled) {
+                                    Text("Custom cancel shortcut")
+                                }
+                                .toggleStyle(.switch)
+                                .onChange(of: isCustomCancelEnabled) { _, newValue in
+                                    if !newValue {
+                                        KeyboardShortcuts.setShortcut(nil, for: .cancelRecorder)
+                                    }
+                                }
+                                
+                                InfoTip(
+                                    title: "Custom Cancel Shortcut",
+                                    message: "Use a custom shortcut instead of double-pressing Escape. Great for Vim users."
+                                )
+                                
+                                Spacer()
+                            }
+                            
+                            if isCustomCancelEnabled {
+                                HStack(spacing: 12) {
+                                    Text("Cancel Shortcut")
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                    
+                                    KeyboardShortcuts.Recorder(for: .cancelRecorder)
+                                        .controlSize(.small)
+                                    
+                                    Spacer()
+                                }
+                                .padding(.leading, 16)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // Quick Paste
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Quick Paste")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.primary)
+                            
+                            HStack(spacing: 12) {
+                                Text("Paste Shortcut")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                
+                                KeyboardShortcuts.Recorder(for: .pasteLastTranscription)
+                                    .controlSize(.small)
+                                
+                                InfoTip(
+                                    title: "Quick Paste",
+                                    message: "Paste your most recent transcription anywhere in macOS without opening VoiceInk."
+                                )
+                                
+                                Spacer()
+                            }
+                        }
+                        
                         Text("Quick press: Start recording, press again to stop. Hold down: Record while pressed, release to stop.")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
-
-                        Divider()
-
-                        Toggle(isOn: $isCustomCancelEnabled) {
-                            Text("Use custom shortcut to cancel recording")
-                        }
-                        .toggleStyle(.switch)
-                        .onChange(of: isCustomCancelEnabled) { _, newValue in
-                            if !newValue {
-                                KeyboardShortcuts.setShortcut(nil, for: .cancelRecorder)
-                            }
-                        }
-                        
-                        if isCustomCancelEnabled {
-                            HStack(spacing: 12) {
-                                Text("Custom Cancel Shortcut")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.secondary)
-                                
-                                KeyboardShortcuts.Recorder(for: .cancelRecorder)
-                                    .controlSize(.small)
-                                
-                                Spacer()
-                            }
-                            .padding(.leading, 16)
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-
-                        Text("Normally, double-press Escape to cancel. Turn this on to use a custom shortcut instead (great for Vim users).")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 8)
+                            .padding(.top, 4)
                     }
                 }
 
-                SettingsSection(
-                    icon: "doc.on.clipboard.fill",
-                    title: "Quick Paste",
-                    subtitle: "Set a shortcut to paste your last transcription anywhere"
-                ) {
-                    HStack(spacing: 12) {
-                        Text("Quick Paste Shortcut")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.secondary)
-                        
-                        KeyboardShortcuts.Recorder(for: .pasteLastTranscription)
-                            .controlSize(.small)
-                        
-                        Spacer()
-                    }
-                }
-
+                // MARK: - Audio & Feedback
                 SettingsSection(
                     icon: "speaker.wave.2.bubble.left.fill",
                     title: "Audio & Feedback",
-                    subtitle: "Control sounds and system behavior during recording"
+                    subtitle: "Sound settings and audio behavior during recording"
                 ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Toggle(isOn: .init(
-                            get: { SoundManager.shared.isEnabled },
-                            set: { SoundManager.shared.isEnabled = $0 }
-                        )) {
-                            Text("Play sounds when recording starts/stops")
-                        }
-                        .toggleStyle(.switch)
+                    VStack(alignment: .leading, spacing: 14) {
+                        SettingsToggleRow(
+                            title: "Recording sounds",
+                            binding: .init(
+                                get: { SoundManager.shared.isEnabled },
+                                set: { SoundManager.shared.isEnabled = $0 }
+                            ),
+                            infoTitle: "Recording Sounds",
+                            infoMessage: "Play audio feedback when recording starts and stops."
+                        )
 
-                        Toggle(isOn: $mediaController.isSystemMuteEnabled) {
-                            Text("Mute other apps while recording")
-                        }
-                        .toggleStyle(.switch)
-                        .help("Automatically mute other apps' audio during recording to avoid interference")
+                        SettingsToggleRow(
+                            title: "Mute other apps while recording",
+                            binding: $mediaController.isSystemMuteEnabled,
+                            infoTitle: "System Audio Muting",
+                            infoMessage: "Automatically mute other apps' audio to improve transcription accuracy."
+                        )
 
-                        Toggle(isOn: Binding(
-                            get: { UserDefaults.standard.bool(forKey: "preserveTranscriptInClipboard") },
-                            set: { UserDefaults.standard.set($0, forKey: "preserveTranscriptInClipboard") }
-                        )) {
-                            Text("Keep transcription in clipboard")
-                        }
-                        .toggleStyle(.switch)
-                        .help("Leave your transcription in the clipboard instead of restoring what was there before")
-
+                        SettingsToggleRow(
+                            title: "Keep transcription in clipboard",
+                            binding: Binding(
+                                get: { UserDefaults.standard.bool(forKey: "preserveTranscriptInClipboard") },
+                                set: { UserDefaults.standard.set($0, forKey: "preserveTranscriptInClipboard") }
+                            ),
+                            infoTitle: "Clipboard Management",
+                            infoMessage: "Leave transcriptions in clipboard instead of restoring previous content."
+                        )
                     }
                 }
 
 
+                // MARK: - Interface & Behavior
                 SettingsSection(
                     icon: "rectangle.on.rectangle",
-                    title: "Recorder Style",
-                    subtitle: "Choose your preferred recorder interface"
+                    title: "Interface & Behavior",
+                    subtitle: "Customize how VoiceInk appears and behaves"
                 ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Select how you want the recorder to appear on your screen.")
-                            .settingsDescription()
-                        
-                        Picker("Recorder Style", selection: $whisperState.recorderType) {
-                            Text("Notch Recorder").tag("notch")
-                            Text("Mini Recorder").tag("mini")
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Recorder Style
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Recorder Style")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                
+                                InfoTip(
+                                    title: "Recorder Styles",
+                                    message: "Notch: Dynamic Island-style recorder at the top. Mini: Moveable floating window."
+                                )
+                                
+                                Spacer()
+                            }
+                            
+                            Picker("Recorder Style", selection: $whisperState.recorderType) {
+                                Text("Notch Recorder").tag("notch")
+                                Text("Mini Recorder").tag("mini")
+                            }
+                            .pickerStyle(.radioGroup)
+                            .padding(.leading, 8)
                         }
-                        .pickerStyle(.radioGroup)
-                        .padding(.vertical, 4)
-                    }
-                }
-
-                SettingsSection(
-                    icon: "doc.on.clipboard",
-                    title: "Paste Method",
-                    subtitle: "Choose how text is pasted"
-                ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Select the method used to paste text. Use AppleScript if you have a non-standard keyboard layout.")
-                            .settingsDescription()
                         
-                        Toggle("Use AppleScript Paste Method", isOn: Binding(
-                            get: { UserDefaults.standard.bool(forKey: "UseAppleScriptPaste") },
-                            set: { UserDefaults.standard.set($0, forKey: "UseAppleScriptPaste") }
-                        ))
-                        .toggleStyle(.switch)
-                    }
-                }
-
-                SettingsSection(
-                    icon: "dock.rectangle",
-                    title: "App Appearance",
-                    subtitle: "Dock and Menu Bar options"
-                ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Choose how VoiceInk appears in your system.")
-                            .settingsDescription()
+                        Divider()
                         
-                        Toggle("Hide Dock Icon (Menu Bar Only)", isOn: $menuBarManager.isMenuBarOnly)
-                            .toggleStyle(.switch)
+                        // App Behavior
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("App Behavior")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.primary)
+                            
+                            SettingsToggleRow(
+                                title: "Menu bar only (hide dock icon)",
+                                binding: $menuBarManager.isMenuBarOnly,
+                                infoTitle: "Menu Bar Only Mode",
+                                infoMessage: "Hide from Dock and run only from menu bar to keep your Dock clean."
+                            )
+                            
+                            SettingsToggleRow(
+                                title: "Use AppleScript for pasting",
+                                binding: Binding(
+                                    get: { UserDefaults.standard.bool(forKey: "UseAppleScriptPaste") },
+                                    set: { UserDefaults.standard.set($0, forKey: "UseAppleScriptPaste") }
+                                ),
+                                infoTitle: "Paste Method",
+                                infoMessage: "Use AppleScript for pasting. Enable if you have paste issues or non-standard keyboard layout."
+                            )
+                        }
                     }
                 }
 
+                // MARK: - Privacy & Data
                 SettingsSection(
                     icon: "lock.shield",
-                    title: "Data & Privacy",
-                    subtitle: "Control transcript history and storage"
+                    title: "Privacy & Data",
+                    subtitle: "Control transcript storage and automatic data cleanup"
                 ) {
-                    AudioCleanupSettingsView()
-                }
-                
-                SettingsSection(
-                    icon: "power",
-                    title: "Startup",
-                    subtitle: "Launch options"
-                ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Choose whether VoiceInk should start automatically when you log in.")
-                            .settingsDescription()
+                    VStack(alignment: .leading, spacing: 16) {
+                        AudioCleanupSettingsView()
                         
-                        LaunchAtLogin.Toggle()
-                            .toggleStyle(.switch)
-                    }
-                }
-                
-
-                SettingsSection(
-                    icon: "arrow.counterclockwise",
-                    title: "Reset Onboarding",
-                    subtitle: "View the introduction again"
-                ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Reset the onboarding process to view the app introduction again.")
-                            .settingsDescription()
+                        Divider()
                         
-                        Button("Reset Onboarding") {
-                            showResetOnboardingAlert = true
+                        // Startup Settings
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Startup")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.primary)
+                            
+                            SettingsToggleRow(
+                                title: "Launch at login",
+                                binding: Binding(
+                                    get: { launchAtLoginEnabled },
+                                    set: { newValue in
+                                        launchAtLoginEnabled = newValue
+                                        LaunchAtLogin.isEnabled = newValue
+                                    }
+                                ),
+                                infoTitle: "Launch at Login",
+                                infoMessage: "Start VoiceInk automatically when you log into your Mac."
+                            )
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
                     }
                 }
+                
 
+
+                // MARK: - Advanced & System
                 SettingsSection(
                     icon: "arrow.up.arrow.down.circle",
-                    title: "Data Management",
-                    subtitle: "Import or export your settings"
+                    title: "Advanced & System",
+                    subtitle: "Import/export settings and system configuration"
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Export your custom prompts, power modes, word replacements, keyboard shortcuts, and app preferences to a backup file. API keys are not included in the export.")
+                        Text("Back up your VoiceInk configuration or transfer settings between devices.")
                             .settingsDescription()
 
                         HStack(spacing: 12) {
@@ -258,10 +287,11 @@ struct SettingsView: View {
                                     whisperState: whisperState
                                 )
                             } label: {
-                                Label("Import Settings...", systemImage: "arrow.down.doc")
+                                Label("Import Settings", systemImage: "arrow.down.doc")
                                     .frame(maxWidth: .infinity)
                             }
-                            .controlSize(.large)
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
 
                             Button {
                                 ImportExportService.shared.exportSettings(
@@ -274,31 +304,25 @@ struct SettingsView: View {
                                     whisperState: whisperState
                                 )
                             } label: {
-                                Label("Export Settings...", systemImage: "arrow.up.doc")
+                                Label("Export Settings", systemImage: "arrow.up.doc")
                                     .frame(maxWidth: .infinity)
                             }
-                            .controlSize(.large)
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
                         }
+                        
+                        Text("API keys and personal data are not included in exports for security.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
                     }
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 6)
+            .padding(.vertical, 12)
         }
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
             isCustomCancelEnabled = KeyboardShortcuts.getShortcut(for: .cancelRecorder) != nil
-        }
-        .alert("Reset Onboarding", isPresented: $showResetOnboardingAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Reset", role: .destructive) {
-                // Defer state change to avoid layout issues while alert dismisses
-                DispatchQueue.main.async {
-                    hasCompletedOnboarding = false
-                }
-            }
-        } message: {
-            Text("Are you sure you want to reset the onboarding? You'll see the introduction screens again the next time you launch the app.")
         }
     }
     
@@ -419,6 +443,25 @@ struct SettingsSection<Content: View>: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(showWarning ? Color.red.opacity(0.5) : Color.clear, lineWidth: 1)
         )
+    }
+}
+
+// MARK: - Helper Components
+struct SettingsToggleRow: View {
+    let title: String
+    let binding: Binding<Bool>
+    let infoTitle: String
+    let infoMessage: String
+    
+    var body: some View {
+        HStack {
+            Toggle(title, isOn: binding)
+                .toggleStyle(.switch)
+            
+            InfoTip(title: infoTitle, message: infoMessage)
+            
+            Spacer()
+        }
     }
 }
 

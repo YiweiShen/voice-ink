@@ -4,6 +4,7 @@ import CoreAudio
 struct AudioInputSettingsView: View {
     @ObservedObject var audioDeviceManager = AudioDeviceManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @State private var systemDefaultDeviceID: AudioDeviceID?
     
     var body: some View {
         ScrollView {
@@ -15,7 +16,9 @@ struct AudioInputSettingsView: View {
         }
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
-            // Initialize with system default if no mode is selected
+            updateSystemDefaultDevice()
+            
+            // Always ensure we have system default selected if no specific preference exists
             if audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == nil {
                 audioDeviceManager.selectInputMode(.systemDefault)
             }
@@ -48,24 +51,27 @@ struct AudioInputSettingsView: View {
     
     private var deviceSelectionSection: some View {
         VStack(spacing: 16) {
-            // System Default Device Option
-            AudioDeviceCard(
-                device: (id: 0, uid: "system-default", name: "System Default"),
-                isSelected: audioDeviceManager.inputMode == .systemDefault,
-                action: { audioDeviceManager.selectInputMode(.systemDefault) }
-            )
-            
             ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
                 AudioDeviceCard(
                     device: device,
-                    isSelected: audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == device.id,
+                    isSystemDefault: device.id == systemDefaultDeviceID,
+                    isSelected: (audioDeviceManager.inputMode == .systemDefault && device.id == systemDefaultDeviceID) ||
+                                (audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == device.id),
                     action: { 
-                        audioDeviceManager.selectInputMode(.custom)
-                        audioDeviceManager.selectDevice(id: device.id) 
+                        if device.id == systemDefaultDeviceID {
+                            audioDeviceManager.selectInputMode(.systemDefault)
+                        } else {
+                            audioDeviceManager.selectInputMode(.custom)
+                            audioDeviceManager.selectDevice(id: device.id)
+                        }
                     }
                 )
             }
         }
+    }
+    
+    private func updateSystemDefaultDevice() {
+        systemDefaultDeviceID = AudioDeviceConfiguration.getDefaultInputDevice()
     }
     
     
@@ -73,6 +79,7 @@ struct AudioInputSettingsView: View {
 
 struct AudioDeviceCard: View {
     let device: (id: AudioDeviceID, uid: String, name: String)
+    let isSystemDefault: Bool
     let isSelected: Bool
     let action: () -> Void
     
@@ -93,9 +100,20 @@ struct AudioDeviceCard: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(device.name)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                        HStack {
+                            Text(device.name)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            if isSystemDefault {
+                                Text("System Default")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue.opacity(0.1))
+                                    .cornerRadius(8)
+                            }
+                        }
                         Text("Microphone")
                             .font(.subheadline)
                             .foregroundColor(.secondary)

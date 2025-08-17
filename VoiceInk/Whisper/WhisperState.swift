@@ -336,8 +336,6 @@ class WhisperState: NSObject, ObservableObject {
                 NotificationCenter.default.post(name: .transcriptionCreated, object: newTranscription)
             }
 
-            // Trial expired check removed - always licensed
-
             text += " "
 
             if await checkCancellationAndCleanup() { return }

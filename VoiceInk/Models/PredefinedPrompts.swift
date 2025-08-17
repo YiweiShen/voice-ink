@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI    // Import to ensure we have access to SwiftUI types if needed
 
 enum PredefinedPrompts {
     private static let predefinedPromptsKey = "PredefinedPrompts"

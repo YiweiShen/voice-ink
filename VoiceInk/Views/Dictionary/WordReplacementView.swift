@@ -149,12 +149,6 @@ struct ReplacementEmptyStateView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 250)
             
-            Button("Add Replacement") {
-                showAddModal = true
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-            .padding(.top, 8)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

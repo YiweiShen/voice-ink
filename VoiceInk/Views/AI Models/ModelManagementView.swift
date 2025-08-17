@@ -12,13 +12,14 @@ struct ModelManagementView: View {
     @EnvironmentObject private var enhancementService: AIEnhancementService
     @Environment(\.modelContext) private var modelContext
     @StateObject private var whisperPrompt = WhisperPrompt()
-    
+
     // Settings toggles moved from ModelSettingsView
     @AppStorage("IsTextFormattingEnabled") private var isTextFormattingEnabled = true
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
 
     @State private var isShowingSettings = false
-    
+    @State private var expandAddCloudModel = false
+
     // State for the unified alert
     @State private var isShowingDeleteAlert = false
     @State private var alertTitle = ""
@@ -28,14 +29,18 @@ struct ModelManagementView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                defaultModelSection
-                outputFormatSection
-                settingsTogglesSection
-                modelsActionButtonsSection(proxy: proxy)
-                unifiedModelsSection
-            }
-            .padding(40)
+                VStack(alignment: .leading, spacing: 24) {
+                    // Section 1: Local & Native Models (with import button)
+                    localModelsSection(proxy: proxy)
+                    
+                    // Section 2: Cloud Models (with add button)
+                    cloudModelsSection(proxy: proxy)
+                    
+                    // Section 3: Other Configurations
+                    otherConfigurationsSection
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 6)
             }
         }
         .frame(minWidth: 600, minHeight: 500)
@@ -49,231 +54,210 @@ struct ModelManagementView: View {
             )
         }
     }
-    
-    private var defaultModelSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Default AI Model")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Default Model")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                Text(whisperState.currentTranscriptionModel?.displayName ?? "Large V3 Turbo (Recommended)")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(CardBackground(isSelected: false))
-        .cornerRadius(10)
-    }
-    
-    private var outputFormatSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Transcription Style")
-                    .font(.headline)
-                
-                InfoTip(
-                    title: "Transcription Style Guide",
-                    message: "Voice recognition models follow the style of your examples rather than instructions. Write examples of how you want your text formatted instead of giving commands.",
-                    learnMoreURL: "https://cookbook.openai.com/examples/whisper_prompting_guide#comparison-with-gpt-prompting"
-                )
-                
-                Spacer()
-                
-                Button(action: {
-                    if isShowingSettings {
-                        // Save changes
-                        whisperPrompt.setCustomPrompt(whisperPrompt.getLanguagePrompt(for: "auto"), for: "auto")
-                        isShowingSettings = false
-                    } else {
-                        // Enter edit mode
-                        isShowingSettings = true
-                    }
-                }) {
-                    Text(isShowingSettings ? "Save" : "Edit")
-                        .font(.caption)
-                }
-            }
-            
-            if isShowingSettings {
-                TextEditor(text: .constant(whisperPrompt.getLanguagePrompt(for: "auto")))
-                    .font(.system(size: 12))
-                    .padding(8)
-                    .frame(height: 80)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
-                
-            } else {
-                Text(whisperPrompt.getLanguagePrompt(for: "auto"))
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(.windowBackgroundColor).opacity(0.4))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
-            }
-        }
-        .padding()
-        .background(CardBackground(isSelected: false))
-        .cornerRadius(10)
-    }
-    
-    private var settingsTogglesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Toggle(isOn: $isTextFormattingEnabled) {
-                    Text("Smart text formatting")
-                        .font(.system(size: 15, weight: .medium))
-                }
-                .toggleStyle(.switch)
-                
-                InfoTip(
-                    title: "Smart Text Formatting",
-                    message: "Automatically breaks up long text into readable paragraphs and improves formatting."
-                )
-                
-                Spacer()
-            }
 
-            HStack {
-                Toggle(isOn: $isVADEnabled) {
-                    Text("Background noise filtering")
+    private var otherConfigurationsSection: some View {
+        SettingsSection(
+            icon: "gearshape.fill",
+            title: "Transcription Configuration",
+            subtitle: "Customize transcription style, formatting, and processing options"
+        ) {
+            VStack(alignment: .leading, spacing: 20) {
+                // Transcription Style Section
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Start Text & Style Examples")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.primary)
+
+                        InfoTip(
+                            title: "Transcription Style Guide",
+                            message: "Voice recognition models follow the style of your examples rather than instructions. Write examples of how you want your text formatted instead of giving commands.",
+                            learnMoreURL: "https://cookbook.openai.com/examples/whisper_prompting_guide#comparison-with-gpt-prompting"
+                        )
+
+                        Spacer()
+
+                        Button(action: {
+                            if isShowingSettings {
+                                whisperPrompt.setCustomPrompt(whisperPrompt.getLanguagePrompt(for: "auto"), for: "auto")
+                                isShowingSettings = false
+                            } else {
+                                isShowingSettings = true
+                            }
+                        }) {
+                            Text(isShowingSettings ? "Save" : "Edit")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.accentColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if isShowingSettings {
+                        TextEditor(text: .constant(whisperPrompt.getLanguagePrompt(for: "auto")))
+                            .font(.system(size: 12, design: .monospaced))
+                            .padding(8)
+                            .frame(height: 80)
+                            .background(Color(.textBackgroundColor))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            )
+                    } else {
+                        Text(whisperPrompt.getLanguagePrompt(for: "auto"))
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.controlBackgroundColor))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+                }
+                
+                Divider()
+                
+                // Processing Options Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Processing Options")
                         .font(.system(size: 15, weight: .medium))
-                }
-                .toggleStyle(.switch)
-                
-                InfoTip(
-                    title: "Background Noise Filtering",
-                    message: "Automatically detects when you're speaking and filters out background noise and silence for more accurate transcription."
-                )
-                
-                Spacer()
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(CardBackground(isSelected: false))
-        .cornerRadius(10)
-    }
-    
-    private func modelsActionButtonsSection(proxy: ScrollViewProxy) -> some View {
-        HStack(spacing: 12) {
-            Button(action: { presentImportPanel() }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .medium))
-                    Text("Import Local Model")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.accentColor)
-                .cornerRadius(12)
-            }
-            .buttonStyle(.plain)
-            
-            Button(action: { 
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    proxy.scrollTo("addModelCard", anchor: .center)
-                }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .medium))
-                    Text("Add Cloud Model")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.accentColor)
-                .cornerRadius(12)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-    
-    private var unifiedModelsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Available Models")
-                .font(.headline)
-                .foregroundColor(.primary)
-                .padding(.bottom, 12)
-                VStack(spacing: 20) {
-                    // Local Models Section
+                        .foregroundColor(.primary)
+                    
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("Local & Native Models")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
+                            Toggle(isOn: $isTextFormattingEnabled) {
+                                Text("Smart text formatting")
+                                    .font(.system(size: 14))
+                            }
+                            .toggleStyle(.switch)
+
+                            InfoTip(
+                                title: "Smart Text Formatting",
+                                message: "Automatically breaks up long text into readable paragraphs and improves formatting."
+                            )
+
                             Spacer()
                         }
-                        
-                        ForEach(localModels, id: \.id) { model in
-                            ModelCardRowView(
-                                model: model,
-                                whisperState: whisperState, 
-                                isDownloaded: whisperState.availableModels.contains { $0.name == model.name },
-                                isCurrent: whisperState.currentTranscriptionModel?.name == model.name,
-                                downloadProgress: whisperState.downloadProgress,
-                                modelURL: whisperState.availableModels.first { $0.name == model.name }?.url,
-                                deleteAction: {
-                                    if let downloadedModel = whisperState.availableModels.first(where: { $0.name == model.name }) {
-                                        alertTitle = "Delete Model"
-                                        alertMessage = "Are you sure you want to delete the model '\(downloadedModel.name)'?"
-                                        deleteActionClosure = {
-                                            Task {
-                                                await whisperState.deleteModel(downloadedModel)
-                                            }
-                                        }
-                                        isShowingDeleteAlert = true
-                                    }
-                                },
-                                setDefaultAction: {
-                                    Task {
-                                        await whisperState.setDefaultTranscriptionModel(model)
-                                    }
-                                },
-                                downloadAction: {
-                                    if let localModel = model as? LocalModel {
-                                        Task { await whisperState.downloadModel(localModel) }
-                                    }
-                                }
+
+                        HStack {
+                            Toggle(isOn: $isVADEnabled) {
+                                Text("Background noise filtering")
+                                    .font(.system(size: 14))
+                            }
+                            .toggleStyle(.switch)
+
+                            InfoTip(
+                                title: "Background Noise Filtering",
+                                message: "Automatically detects when you're speaking and filters out background noise and silence for more accurate transcription."
                             )
+
+                            Spacer()
                         }
                     }
-                    
-                    Divider()
-                    
-                    // Custom Cloud Models Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Cloud Models (OpenAI Compatible)")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
-                            Spacer()
-                        }
+                }
+            }
+        }
+    }
+
+
+    private func localModelsSection(proxy: ScrollViewProxy) -> some View {
+        SettingsSection(
+            icon: "cpu.fill",
+            title: "Local & Native Models",
+            subtitle: "Models that run on your device for maximum privacy"
+        ) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("These models run directly on your Mac without sending data to external servers.")
+                    .settingsDescription()
+                
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(localModels, id: \.id) { model in
+                        ModelCardRowView(
+                            model: model,
+                            whisperState: whisperState,
+                            isDownloaded: whisperState.availableModels.contains { $0.name == model.name },
+                            isCurrent: whisperState.currentTranscriptionModel?.name == model.name,
+                            downloadProgress: whisperState.downloadProgress,
+                            modelURL: whisperState.availableModels.first { $0.name == model.name }?.url,
+                            deleteAction: {
+                                if let downloadedModel = whisperState.availableModels.first(where: { $0.name == model.name }) {
+                                    alertTitle = "Delete Model"
+                                    alertMessage = "Are you sure you want to delete the model '\(downloadedModel.name)'?"
+                                    deleteActionClosure = {
+                                        Task {
+                                            await whisperState.deleteModel(downloadedModel)
+                                        }
+                                    }
+                                    isShowingDeleteAlert = true
+                                }
+                            },
+                            setDefaultAction: {
+                                Task {
+                                    await whisperState.setDefaultTranscriptionModel(model)
+                                }
+                            },
+                            downloadAction: {
+                                if let localModel = model as? LocalModel {
+                                    Task { await whisperState.downloadModel(localModel) }
+                                }
+                            }
+                        )
+                    }
+                }
+                
+                Button(action: { presentImportPanel() }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("Import Local Model")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.accentColor)
+                    .cornerRadius(12)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func cloudModelsSection(proxy: ScrollViewProxy) -> some View {
+        SettingsSection(
+            icon: "cloud.fill",
+            title: "Cloud Models",
+            subtitle: "OpenAI-compatible APIs for advanced transcription"
+        ) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Connect to OpenAI-compatible transcription APIs for enhanced features and accuracy.")
+                    .settingsDescription()
+                
+                if customModels.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "cloud.slash")
+                            .font(.system(size: 32))
+                            .foregroundColor(.secondary.opacity(0.7))
                         
+                        Text("No cloud models configured")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        Text("Add your first cloud model API to get started with advanced transcription features.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                } else {
+                    VStack(alignment: .leading, spacing: 12) {
                         ForEach(customModels, id: \.id) { model in
                             ModelCardRowView(
                                 model: model,
-                                whisperState: whisperState, 
-                                isDownloaded: true, // Cloud models are always "available"
+                                whisperState: whisperState,
+                                isDownloaded: true,
                                 isCurrent: whisperState.currentTranscriptionModel?.name == model.name,
                                 downloadProgress: whisperState.downloadProgress,
                                 modelURL: nil,
@@ -299,23 +283,46 @@ struct ModelManagementView: View {
                                 }
                             )
                         }
-                        
-                        // Add Custom Model Card
-                        AddCustomModelCardView(
-                            customModelManager: customModelManager,
-                            editingModel: customModelToEdit
-                        ) {
-                            // Refresh the models when a new custom model is added
-                            whisperState.refreshAllAvailableModels()
-                            customModelToEdit = nil // Clear editing state
-                        }
-                        .id("addModelCard")
                     }
                 }
+                
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        proxy.scrollTo("addModelCard", anchor: .center)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        expandAddCloudModel = true
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 14, weight: .medium))
+                        Text(customModels.isEmpty ? "Add Your First Cloud Model" : "Add Another Cloud Model")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.accentColor)
+                    .cornerRadius(12)
+                }
+                .buttonStyle(.plain)
+                
+                // Add Custom Model Card
+                AddCustomModelCardView(
+                    customModelManager: customModelManager,
+                    onModelAdded: {
+                        whisperState.refreshAllAvailableModels()
+                        customModelToEdit = nil
+                    },
+                    editingModel: customModelToEdit,
+                    forceExpanded: $expandAddCloudModel
+                )
+                .id("addModelCard")
             }
-            .padding()
         }
-    
+    }
+
     private var localModels: [any TranscriptionModel] {
         return whisperState.allAvailableModels.filter { model in
             model.provider == .local ||
@@ -323,7 +330,7 @@ struct ModelManagementView: View {
             model.provider == .parakeet
         }
     }
-    
+
     private var customModels: [any TranscriptionModel] {
         return whisperState.allAvailableModels.filter { $0.provider == .custom }
     }

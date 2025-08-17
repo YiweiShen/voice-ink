@@ -177,12 +177,6 @@ struct DictionaryEmptyStateView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 250)
             
-            Button("Add Word") {
-                showAddModal = true
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-            .padding(.top, 8)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

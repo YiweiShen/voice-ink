@@ -17,15 +17,23 @@ struct AudioCleanupSettingsView: View {
     @State private var showTranscriptCleanupResult = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Control how VoiceInk handles your transcription data and audio recordings for privacy and storage management.")
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                .settingsDescription()
             
-            Toggle("Automatically delete transcript history", isOn: $isTranscriptionCleanupEnabled)
-                .toggleStyle(.switch)
-                .padding(.vertical, 4)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Toggle("Automatically delete transcript history", isOn: $isTranscriptionCleanupEnabled)
+                        .toggleStyle(.switch)
+                    
+                    InfoTip(
+                        title: "Transcript History Cleanup",
+                        message: "When enabled, old transcription history will be automatically deleted based on your retention settings. This helps keep your data private and saves storage space."
+                    )
+                    
+                    Spacer()
+                }
+            }
             
             if isTranscriptionCleanupEnabled {
                 VStack(alignment: .leading, spacing: 8) {
@@ -39,26 +47,26 @@ struct AudioCleanupSettingsView: View {
                     .pickerStyle(.menu)
 
                     Text("Older transcripts will be deleted automatically based on your selection.")
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .settingsDescription()
                         .padding(.top, 2)
 
-                    Button(action: {
-                        Task {
-                            await TranscriptionAutoCleanupService.shared.runManualCleanup(modelContext: whisperState.modelContext)
-                            await MainActor.run {
-                                showTranscriptCleanupResult = true
+                    HStack {
+                        Button(action: {
+                            Task {
+                                await TranscriptionAutoCleanupService.shared.runManualCleanup(modelContext: whisperState.modelContext)
+                                await MainActor.run {
+                                    showTranscriptCleanupResult = true
+                                }
                             }
+                        }) {
+                            Label("Run Transcript Cleanup Now", systemImage: "trash.circle")
+                                .frame(maxWidth: .infinity)
                         }
-                    }) {
-                        HStack {
-                            Image(systemName: "trash.circle")
-                            Text("Run Transcript Cleanup Now")
-                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        
+                        Spacer()
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
                     .alert("Transcript Cleanup", isPresented: $showTranscriptCleanupResult) {
                         Button("OK", role: .cancel) { }
                     } message: {
@@ -71,9 +79,18 @@ struct AudioCleanupSettingsView: View {
             if !isTranscriptionCleanupEnabled {
                 Divider()
                     .padding(.vertical, 8)
-                Toggle("Enable automatic audio cleanup", isOn: $isAudioCleanupEnabled)
-                    .toggleStyle(.switch)
-                    .padding(.vertical, 4)
+                
+                HStack {
+                    Toggle("Enable automatic audio cleanup", isOn: $isAudioCleanupEnabled)
+                        .toggleStyle(.switch)
+                    
+                    InfoTip(
+                        title: "Audio File Cleanup",
+                        message: "When enabled, audio recordings will be automatically deleted after the specified retention period, while keeping the text transcripts. This saves storage space while preserving your transcription history."
+                    )
+                    
+                    Spacer()
+                }
             }
 
             if isAudioCleanupEnabled && !isTranscriptionCleanupEnabled {
@@ -88,46 +105,48 @@ struct AudioCleanupSettingsView: View {
                     .pickerStyle(.menu)
                     
                     Text("Audio files older than the selected period will be automatically deleted, while keeping the text transcripts intact.")
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .settingsDescription()
                         .padding(.top, 2)
                 }
                 .padding(.vertical, 4)
                 
-                Button(action: {
-                    // Start by analyzing what would be cleaned up
-                    Task {
-                        // Update UI state
-                        await MainActor.run {
-                            isPerformingCleanup = true
+                HStack {
+                    Button(action: {
+                        // Start by analyzing what would be cleaned up
+                        Task {
+                            // Update UI state
+                            await MainActor.run {
+                                isPerformingCleanup = true
+                            }
+                            
+                            // Get cleanup info
+                            let info = await AudioCleanupManager.shared.getCleanupInfo(modelContext: whisperState.modelContext)
+                            
+                            // Update UI with results
+                            await MainActor.run {
+                                cleanupInfo = info
+                                isPerformingCleanup = false
+                                isShowingConfirmation = true
+                            }
                         }
-                        
-                        // Get cleanup info
-                        let info = await AudioCleanupManager.shared.getCleanupInfo(modelContext: whisperState.modelContext)
-                        
-                        // Update UI with results
-                        await MainActor.run {
-                            cleanupInfo = info
-                            isPerformingCleanup = false
-                            isShowingConfirmation = true
+                    }) {
+                        HStack {
+                            if isPerformingCleanup {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            Text(isPerformingCleanup ? "Analyzing..." : "Run Cleanup Now")
                         }
+                        .frame(maxWidth: .infinity)
                     }
-                }) {
-                    HStack {
-                        if isPerformingCleanup {
-                            ProgressView()
-                                .controlSize(.small)
-                                .padding(.trailing, 4)
-                        } else {
-                            Image(systemName: "arrow.clockwise")
-                        }
-                        Text(isPerformingCleanup ? "Analyzing..." : "Run Cleanup Now")
-                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .disabled(isPerformingCleanup)
+                    
+                    Spacer()
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(isPerformingCleanup)
                 .alert("Audio Cleanup", isPresented: $isShowingConfirmation) {
                     Button("Cancel", role: .cancel) { }
                     

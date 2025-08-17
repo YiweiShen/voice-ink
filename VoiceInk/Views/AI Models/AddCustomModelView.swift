@@ -4,6 +4,7 @@ struct AddCustomModelCardView: View {
     @ObservedObject var customModelManager: CustomModelManager
     var onModelAdded: () -> Void
     var editingModel: CustomCloudModel? = nil
+    @Binding var forceExpanded: Bool
     
     @State private var isExpanded = false
     @State private var displayName = ""
@@ -18,45 +19,6 @@ struct AddCustomModelCardView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Simple Add Model Button
-            if !isExpanded {
-                Button(action: {
-                    withAnimation(.interpolatingSpring(stiffness: 170, damping: 20)) {
-                        isExpanded = true
-                        // Pre-fill values - either from editing model or defaults
-                        if let editing = editingModel {
-                            displayName = editing.displayName
-                            apiEndpoint = editing.apiEndpoint
-                            apiKey = editing.apiKey
-                            modelName = editing.modelName
-                            isMultilingual = editing.isMultilingualModel
-                        } else {
-                            // Pre-fill some default values when adding new
-                            if apiEndpoint.isEmpty {
-                                apiEndpoint = "https://api.example.com/v1/audio/transcriptions"
-                            }
-                            if modelName.isEmpty {
-                                modelName = "large-v3-turbo"
-                            }
-                        }
-                    }
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .medium))
-                        Text(editingModel != nil ? "Edit Model" : "Add Model")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.accentColor)
-                    .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
-                .shadow(color: Color.accentColor.opacity(0.3), radius: 8, y: 4)
-            }
-            
             // Expandable Form Section
             if isExpanded {
                 VStack(alignment: .leading, spacing: 20) {
@@ -71,6 +33,7 @@ struct AddCustomModelCardView: View {
                         Button(action: {
                             withAnimation(.interpolatingSpring(stiffness: 170, damping: 20)) {
                                 isExpanded = false
+                                forceExpanded = false
                                 clearForm()
                             }
                         }) {
@@ -110,6 +73,7 @@ struct AddCustomModelCardView: View {
                         Button(action: {
                             withAnimation(.interpolatingSpring(stiffness: 170, damping: 20)) {
                                 isExpanded = false
+                                forceExpanded = false
                                 clearForm()
                             }
                         }) {
@@ -178,6 +142,20 @@ struct AddCustomModelCardView: View {
                         apiKey = editing.apiKey
                         modelName = editing.modelName
                         isMultilingual = editing.isMultilingualModel
+                    }
+                }
+            }
+        }
+        .onChange(of: forceExpanded) { oldValue, newValue in
+            if newValue && !isExpanded {
+                withAnimation(.interpolatingSpring(stiffness: 170, damping: 20)) {
+                    isExpanded = true
+                    // Pre-fill some default values when adding new
+                    if apiEndpoint.isEmpty {
+                        apiEndpoint = "https://api.example.com/v1/audio/transcriptions"
+                    }
+                    if modelName.isEmpty {
+                        modelName = "large-v3-turbo"
                     }
                 }
             }
@@ -258,6 +236,7 @@ struct AddCustomModelCardView: View {
             // Reset form and collapse
             withAnimation(.interpolatingSpring(stiffness: 170, damping: 20)) {
                 isExpanded = false
+                forceExpanded = false
                 clearForm()
                 isSaving = false
             }
