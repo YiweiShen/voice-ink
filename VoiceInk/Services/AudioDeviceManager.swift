@@ -34,14 +34,14 @@ class AudioDeviceManager: ObservableObject {
             self?.initializeSelectedDevice()
         }
 
-        // Always start with custom mode unless user has explicitly chosen otherwise
+        // Always start with system default mode unless user has explicitly chosen otherwise
         if let savedMode = UserDefaults.standard.audioInputModeRawValue,
            let mode = AudioInputMode(rawValue: savedMode) {
             inputMode = mode
         } else {
-            // Ensure we start with custom mode and save this preference
-            inputMode = .custom
-            UserDefaults.standard.audioInputModeRawValue = AudioInputMode.custom.rawValue
+            // Ensure we start with system default mode and save this preference
+            inputMode = .systemDefault
+            UserDefaults.standard.audioInputModeRawValue = AudioInputMode.systemDefault.rawValue
         }
 
         setupDeviceChangeNotifications()
@@ -152,7 +152,25 @@ class AudioDeviceManager: ObservableObject {
 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.availableDevices = devices.map { ($0.id, $0.uid, $0.name) }
+            
+            // Get system default device to sort it first
+            let systemDefaultID = AudioDeviceConfiguration.getDefaultInputDevice()
+            
+            // Sort devices with system default first, then alphabetically by name
+            let sortedDevices = devices.sorted { device1, device2 in
+                let isDevice1SystemDefault = device1.id == systemDefaultID
+                let isDevice2SystemDefault = device2.id == systemDefaultID
+                
+                if isDevice1SystemDefault && !isDevice2SystemDefault {
+                    return true
+                } else if !isDevice1SystemDefault && isDevice2SystemDefault {
+                    return false
+                } else {
+                    return device1.name < device2.name
+                }
+            }
+            
+            self.availableDevices = sortedDevices.map { ($0.id, $0.uid, $0.name) }
             if let currentID = self.selectedDeviceID, !devices.contains(where: { $0.id == currentID }) {
                 self.logger.warning("Currently selected device is no longer available")
                 self.fallbackToDefaultDevice()

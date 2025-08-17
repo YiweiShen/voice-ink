@@ -61,30 +61,73 @@ class MenuBarManager: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
-            if self.isMenuBarOnly {
-                NSApp.setActivationPolicy(.accessory)
-            } else {
-                NSApp.setActivationPolicy(.regular)
-            }
+            // Always set to regular when opening main window to ensure it shows
+            NSApp.setActivationPolicy(.regular)
             
-            // Activate the app
+            // Activate the app and bring to front
             NSApp.activate(ignoringOtherApps: true)
+            NSApp.unhide(nil)
             
-            // Clean up existing window if it's no longer valid
-            if let existingWindow = self.mainWindow, !existingWindow.isVisible {
-                self.mainWindow = nil
+            // Find any existing main content windows (including SwiftUI WindowGroup windows)
+            let existingWindows = NSApp.windows.filter { window in
+                // Check for main content windows by looking for ContentView in the hierarchy
+                func hasContentView(in view: NSView?) -> Bool {
+                    guard let view = view else { return false }
+                    
+                    // Check if it's a hosting view with ContentView
+                    if view.className.contains("NSHostingView") {
+                        return true
+                    }
+                    
+                    // Recursively check subviews
+                    for subview in view.subviews {
+                        if hasContentView(in: subview) {
+                            return true
+                        }
+                    }
+                    return false
+                }
+                
+                // Filter out recorder windows and other system windows
+                guard window.title == "VoiceInk" && !window.title.contains("Recorder") else {
+                    return false
+                }
+                
+                // Check if this window contains ContentView
+                return hasContentView(in: window.contentView)
             }
             
-            // Get or create main window
-            if self.mainWindow == nil {
-                self.mainWindow = self.createMainWindow()
+            if let existingWindow = existingWindows.first {
+                // Use the existing window (whether SwiftUI WindowGroup or manually created)
+                existingWindow.makeKeyAndOrderFront(nil)
+                existingWindow.orderFrontRegardless()
+                NSApp.activate(ignoringOtherApps: true)
+                print("MenuBarManager: Reusing existing window")
+                
+                // Clear our stored reference if it's different
+                if self.mainWindow != existingWindow {
+                    self.mainWindow = nil
+                }
+            } else {
+                // Clean up existing window if it's no longer valid
+                if let existingWindow = self.mainWindow, !existingWindow.isVisible {
+                    self.mainWindow = nil
+                }
+                
+                // Get or create main window only if none exists
+                if self.mainWindow == nil {
+                    self.mainWindow = self.createMainWindow()
+                }
+                
+                guard let window = self.mainWindow else { return }
+                
+                // Make the window key and order front
+                window.makeKeyAndOrderFront(nil)
+                window.center()
+                window.orderFrontRegardless()
+                NSApp.activate(ignoringOtherApps: true)
+                print("MenuBarManager: Created new window")
             }
-            
-            guard let window = self.mainWindow else { return }
-            
-            // Make the window key and order front
-            window.makeKeyAndOrderFront(nil)
-            window.center()  // Always center the window for consistent positioning
             
             // Post a notification to navigate to the desired destination
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -109,6 +152,11 @@ class MenuBarManager: ObservableObject {
             .environmentObject(enhancementService)
             .environmentObject(aiService)
             .environment(\.modelContext, ModelContext(container))
+            .onDisappear {
+                Task {
+                    await self.whisperState.unloadModel()
+                }
+            }
         
         // Create window using WindowManager
         let hostingView = NSHostingView(rootView: contentView)

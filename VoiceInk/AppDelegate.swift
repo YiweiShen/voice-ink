@@ -3,6 +3,10 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Default to menu bar only mode on first launch
+        if UserDefaults.standard.object(forKey: "IsMenuBarOnly") == nil {
+            UserDefaults.standard.set(true, forKey: "IsMenuBarOnly")
+        }
         updateActivationPolicy()
         cleanupLegacyUserDefaults()
     }
@@ -24,8 +28,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
     
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Allow normal Command+Q termination
+        return .terminateNow
+    }
+    
     private func updateActivationPolicy() {
-        let isMenuBarOnly = UserDefaults.standard.bool(forKey: "IsMenuBarOnly")
+        let isMenuBarOnly = UserDefaults.standard.object(forKey: "IsMenuBarOnly") != nil ? UserDefaults.standard.bool(forKey: "IsMenuBarOnly") : false
         if isMenuBarOnly {
             NSApp.setActivationPolicy(.accessory)
         } else {
@@ -34,13 +43,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func createMainWindowIfNeeded() {
-        if NSApp.windows.isEmpty {
-            let contentView = ContentView()
-            let hostingView = NSHostingView(rootView: contentView)
-            let window = WindowManager.shared.createMainWindow(contentView: hostingView)
-            window.makeKeyAndOrderFront(nil)
+        // Find existing main windows first
+        let existingWindows = NSApp.windows.filter { window in
+            window.title == "VoiceInk" && !window.title.contains("Recorder")
+        }
+        
+        if let existingWindow = existingWindows.first {
+            existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
         } else {
-            NSApp.windows.first?.makeKeyAndOrderFront(nil)
+            // Need to get the app's shared services to create a proper window
+            // This will be handled by the MenuBarManager when it creates windows
+            // For now, just ensure the activation policy is correct
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 
