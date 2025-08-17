@@ -11,7 +11,6 @@ struct SettingsView: View {
     @EnvironmentObject private var enhancementService: AIEnhancementService
     @StateObject private var deviceManager = AudioDeviceManager.shared
     @ObservedObject private var mediaController = MediaController.shared
-    @ObservedObject private var playbackController = PlaybackController.shared
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     @State private var showResetOnboardingAlert = false
     @State private var currentShortcut = KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder)
@@ -23,8 +22,8 @@ struct SettingsView: View {
             VStack(spacing: 24) {
                 SettingsSection(
                     icon: "command.circle",
-                    title: "VoiceInk Shortcut",
-                    subtitle: "Choose how you want to trigger VoiceInk"
+                    title: "Recording Shortcuts",
+                    subtitle: "Set up keyboard shortcuts to start recording quickly"
                 ) {
                     VStack(alignment: .leading, spacing: 18) {
                         hotkeyView(
@@ -59,7 +58,7 @@ struct SettingsView: View {
                             }
                         }
 
-                        Text("Quick tap to start hands-free recording (tap again to stop). Press and hold for push-to-talk (release to stop recording).")
+                        Text("Quick press: Start recording, press again to stop. Hold down: Record while pressed, release to stop.")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -67,7 +66,7 @@ struct SettingsView: View {
                         Divider()
 
                         Toggle(isOn: $isCustomCancelEnabled) {
-                            Text("Override default double-tap Escape cancellation")
+                            Text("Use custom shortcut to cancel recording")
                         }
                         .toggleStyle(.switch)
                         .onChange(of: isCustomCancelEnabled) { _, newValue in
@@ -91,7 +90,7 @@ struct SettingsView: View {
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
 
-                        Text("By default, double-tap Escape to cancel recordings. Enable override above for single-press custom cancellation (useful for Vim users).")
+                        Text("Normally, double-press Escape to cancel. Turn this on to use a custom shortcut instead (great for Vim users).")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -101,11 +100,11 @@ struct SettingsView: View {
 
                 SettingsSection(
                     icon: "doc.on.clipboard.fill",
-                    title: "Paste Last Transcription",
-                    subtitle: "Configure shortcut to paste your most recent transcription"
+                    title: "Quick Paste",
+                    subtitle: "Set a shortcut to paste your last transcription anywhere"
                 ) {
                     HStack(spacing: 12) {
-                        Text("Paste Shortcut")
+                        Text("Quick Paste Shortcut")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.secondary)
                         
@@ -118,37 +117,36 @@ struct SettingsView: View {
 
                 SettingsSection(
                     icon: "speaker.wave.2.bubble.left.fill",
-                    title: "Recording Feedback",
-                    subtitle: "Customize app & system feedback"
+                    title: "Audio & Feedback",
+                    subtitle: "Control sounds and system behavior during recording"
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
                         Toggle(isOn: .init(
                             get: { SoundManager.shared.isEnabled },
                             set: { SoundManager.shared.isEnabled = $0 }
                         )) {
-                            Text("Sound feedback")
+                            Text("Play sounds when recording starts/stops")
                         }
                         .toggleStyle(.switch)
 
                         Toggle(isOn: $mediaController.isSystemMuteEnabled) {
-                            Text("Mute system audio during recording")
+                            Text("Mute other apps while recording")
                         }
                         .toggleStyle(.switch)
-                        .help("Automatically mute system audio when recording starts and restore when recording stops")
+                        .help("Automatically mute other apps' audio during recording to avoid interference")
 
                         Toggle(isOn: Binding(
                             get: { UserDefaults.standard.bool(forKey: "preserveTranscriptInClipboard") },
                             set: { UserDefaults.standard.set($0, forKey: "preserveTranscriptInClipboard") }
                         )) {
-                            Text("Preserve transcript in clipboard")
+                            Text("Keep transcription in clipboard")
                         }
                         .toggleStyle(.switch)
-                        .help("Keep the transcribed text in clipboard instead of restoring the original clipboard content")
+                        .help("Leave your transcription in the clipboard instead of restoring what was there before")
 
                     }
                 }
 
-                ExperimentalFeaturesSection()
 
                 SettingsSection(
                     icon: "rectangle.on.rectangle",
@@ -256,7 +254,6 @@ struct SettingsView: View {
                                     hotkeyManager: hotkeyManager, 
                                     menuBarManager: menuBarManager, 
                                     mediaController: MediaController.shared, 
-                                    playbackController: PlaybackController.shared,
                                     soundManager: SoundManager.shared,
                                     whisperState: whisperState
                                 )
@@ -273,7 +270,6 @@ struct SettingsView: View {
                                     hotkeyManager: hotkeyManager, 
                                     menuBarManager: menuBarManager, 
                                     mediaController: MediaController.shared, 
-                                    playbackController: PlaybackController.shared,
                                     soundManager: SoundManager.shared,
                                     whisperState: whisperState
                                 )

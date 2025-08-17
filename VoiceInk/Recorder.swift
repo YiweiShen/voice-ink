@@ -11,7 +11,6 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private var deviceObserver: NSObjectProtocol?
     private var isReconfiguring = false
     private let mediaController = MediaController.shared
-    private let playbackController = PlaybackController.shared
     @Published var audioMeter = AudioMeter(averagePower: 0, peakPower: 0)
     private var audioLevelCheckTask: Task<Void, Never>?
     private var hasDetectedAudioInCurrentSession = false
@@ -77,7 +76,6 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         hasDetectedAudioInCurrentSession = false
 
         Task {
-            await playbackController.pauseMedia()
             _ = await mediaController.muteSystemAudio()
         }
 
@@ -155,8 +153,6 @@ class Recorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
         Task {
             await mediaController.unmuteSystemAudio()
-            try? await Task.sleep(nanoseconds: 100_000_000)
-            await playbackController.resumeMedia()
         }
         deviceManager.isRecordingActive = false
     }

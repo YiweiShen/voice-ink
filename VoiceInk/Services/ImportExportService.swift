@@ -20,9 +20,7 @@ struct GeneralSettings: Codable {
 
     let isSoundFeedbackEnabled: Bool?
     let isSystemMuteEnabled: Bool?
-    let isPauseMediaEnabled: Bool?
     let isTextFormattingEnabled: Bool?
-    let isExperimentalFeaturesEnabled: Bool?
 }
 
 struct VoiceInkExportedSettings: Codable {
@@ -63,7 +61,7 @@ class ImportExportService {
     }
 
     @MainActor
-    func exportSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
+    func exportSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, soundManager: SoundManager, whisperState: WhisperState) {
         let exportablePrompts = enhancementService.customPrompts.filter { !$0.isPredefined }
         
         // Export custom models
@@ -93,9 +91,7 @@ class ImportExportService {
 
             isSoundFeedbackEnabled: soundManager.isEnabled,
             isSystemMuteEnabled: mediaController.isSystemMuteEnabled,
-            isPauseMediaEnabled: playbackController.isPauseMediaEnabled,
-            isTextFormattingEnabled: UserDefaults.standard.object(forKey: keyIsTextFormattingEnabled) as? Bool ?? true,
-            isExperimentalFeaturesEnabled: UserDefaults.standard.bool(forKey: "isExperimentalFeaturesEnabled")
+            isTextFormattingEnabled: UserDefaults.standard.object(forKey: keyIsTextFormattingEnabled) as? Bool ?? true
         )
 
         let exportedSettings = VoiceInkExportedSettings(
@@ -140,7 +136,7 @@ class ImportExportService {
     }
 
     @MainActor
-    func importSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController, soundManager: SoundManager, whisperState: WhisperState) {
+    func importSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, soundManager: SoundManager, whisperState: WhisperState) {
         let openPanel = NSOpenPanel()
         openPanel.allowedContentTypes = [UTType.json]
         openPanel.canChooseFiles = true
@@ -239,15 +235,6 @@ class ImportExportService {
                         }
                         if let muteSystem = general.isSystemMuteEnabled {
                             mediaController.isSystemMuteEnabled = muteSystem
-                        }
-                        if let pauseMedia = general.isPauseMediaEnabled {
-                            playbackController.isPauseMediaEnabled = pauseMedia
-                        }
-                        if let experimentalEnabled = general.isExperimentalFeaturesEnabled {
-                            UserDefaults.standard.set(experimentalEnabled, forKey: "isExperimentalFeaturesEnabled")
-                            if experimentalEnabled == false {
-                                playbackController.isPauseMediaEnabled = false
-                            }
                         }
                         if let textFormattingEnabled = general.isTextFormattingEnabled {
                             UserDefaults.standard.set(textFormattingEnabled, forKey: self.keyIsTextFormattingEnabled)
