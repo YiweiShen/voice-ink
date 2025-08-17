@@ -34,9 +34,14 @@ class AudioDeviceManager: ObservableObject {
             self?.initializeSelectedDevice()
         }
 
+        // Always start with custom mode unless user has explicitly chosen otherwise
         if let savedMode = UserDefaults.standard.audioInputModeRawValue,
            let mode = AudioInputMode(rawValue: savedMode) {
             inputMode = mode
+        } else {
+            // Ensure we start with custom mode and save this preference
+            inputMode = .custom
+            UserDefaults.standard.audioInputModeRawValue = AudioInputMode.custom.rawValue
         }
 
         setupDeviceChangeNotifications()

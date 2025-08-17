@@ -77,7 +77,7 @@ class DictionaryManager: ObservableObject {
 struct DictionaryView: View {
     @StateObject private var dictionaryManager: DictionaryManager
     @ObservedObject var whisperPrompt: WhisperPrompt
-    @State private var newWord = ""
+    @State private var showAddWordModal = false
     @State private var showAlert = false
     @State private var alertMessage = ""
     
@@ -101,36 +101,30 @@ struct DictionaryView: View {
                 }
             }
             
-            // Input Section
-            HStack(spacing: 8) {
-                TextField("Add word to dictionary", text: $newWord)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 13))
-                    .onSubmit { addWord() }
-                
-                Button(action: addWord) {
-                    Image(systemName: "plus.circle.fill")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(.blue)
-                        .font(.system(size: 16, weight: .semibold))
+            VStack(spacing: 0) {
+                // Header with action button
+                HStack {
+                    Text("Dictionary Words")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Button(action: { showAddWordModal = true }) {
+                        Image(systemName: "plus")
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Add new word")
                 }
-                .buttonStyle(.borderless)
-                .disabled(newWord.isEmpty)
-                .help("Add word")
-            }
-            
-            // Words List
-            if !dictionaryManager.items.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Dictionary Items (\(dictionaryManager.items.count))")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
-                    
-                    Text("Toggle words on/off to optimize recognition. Disable unnecessary words to improve local AI model performance.")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                        .padding(.bottom, 4)
-                    
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(.controlBackgroundColor))
+                
+                Divider()
+                
+                // Content
+                if dictionaryManager.items.isEmpty {
+                    DictionaryEmptyStateView(showAddModal: $showAddWordModal)
+                } else {
                     ScrollView {
                         let columns = [
                             GridItem(.adaptive(minimum: 240, maximum: .infinity), spacing: 12)
@@ -145,14 +139,164 @@ struct DictionaryView: View {
                                 }
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding()
                     }
                     .frame(maxHeight: 200)
                 }
-                .padding(.top, 4)
             }
+            
         }
         .padding()
+        .sheet(isPresented: $showAddWordModal) {
+            AddWordSheet(manager: dictionaryManager)
+        }
+        .alert("Dictionary", isPresented: $showAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(alertMessage)
+        }
+    }
+    
+}
+
+struct DictionaryEmptyStateView: View {
+    @Binding var showAddModal: Bool
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "character.book.closed")
+                .font(.system(size: 32))
+                .foregroundColor(.secondary)
+            
+            Text("No Dictionary Words")
+                .font(.headline)
+            
+            Text("Add words to help VoiceInk recognize industry terms, names, and technical words.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 250)
+            
+            Button("Add Word") {
+                showAddModal = true
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .padding(.top, 8)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct AddWordSheet: View {
+    @ObservedObject var manager: DictionaryManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var newWord = ""
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Button("Cancel", role: .cancel) {
+                    dismiss()
+                }
+                .buttonStyle(.borderless)
+                .keyboardShortcut(.escape, modifiers: [])
+                
+                Spacer()
+                
+                Text("Add Dictionary Word")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button("Add") {
+                    addWord()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(newWord.isEmpty)
+                .keyboardShortcut(.return, modifiers: [])
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(CardBackground(isSelected: false))
+            
+            Divider()
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Description
+                    Text("Add a word to help VoiceInk recognize it properly during transcription. This only works with Whisper models.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                    
+                    // Form Content
+                    VStack(spacing: 16) {
+                        // Word Input Section
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("Dictionary Word")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Required")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            TextField("Enter word or phrase", text: $newWord)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.body)
+                        }
+                        .padding(.horizontal)
+                    }
+                    
+                    // Usage Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Usage Guidelines")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("•")
+                                    .foregroundColor(.secondary)
+                                Text("Maximum 154 characters total (~25 words)")
+                                    .font(.callout)
+                            }
+                            
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("•")
+                                    .foregroundColor(.secondary)
+                                Text("Use for technical terms, names, or industry-specific words")
+                                    .font(.callout)
+                            }
+                            
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("•")
+                                    .foregroundColor(.secondary)
+                                Text("Toggle words on/off to optimize recognition performance")
+                                    .font(.callout)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color(.textBackgroundColor))
+                        .cornerRadius(8)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                }
+                .padding(.vertical)
+            }
+        }
+        .frame(width: 460, height: 400)
         .alert("Dictionary", isPresented: $showAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -164,14 +308,14 @@ struct DictionaryView: View {
         let word = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !word.isEmpty else { return }
         
-        if dictionaryManager.items.contains(where: { $0.word.lowercased() == word.lowercased() }) {
+        if manager.items.contains(where: { $0.word.lowercased() == word.lowercased() }) {
             alertMessage = "'\(word)' is already in the dictionary"
             showAlert = true
             return
         }
         
-        dictionaryManager.addWord(word)
-        newWord = ""
+        manager.addWord(word)
+        dismiss()
     }
 }
 

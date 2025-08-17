@@ -1,19 +1,18 @@
 import SwiftUI
 
 struct DictionarySettingsView: View {
-    @State private var selectedSection: DictionarySection = .replacements
     let whisperPrompt: WhisperPrompt
     
     enum DictionarySection: String, CaseIterable {
-        case replacements = "Word Replacements"
-        case spellings = "Correct Spellings"
+        case replacements = "Text Shortcuts"
+        case spellings = "Custom Words"
         
         var description: String {
             switch self {
             case .spellings:
-                return "Train VoiceInk to recognize industry terms, names, and technical words"
+                return "Add names, technical terms, and specialized words that VoiceInk should know"
             case .replacements:
-                return "Automatically replace specific words/phrases with custom formatted text "
+                return "Create shortcuts that automatically expand into longer text (like 'btw' → 'by the way')"
             }
         }
         
@@ -49,9 +48,9 @@ struct DictionarySettingsView: View {
                     .shadow(color: .black.opacity(0.1), radius: 10, y: 5))
             
             VStack(spacing: 8) {
-                Text("Dictionary Settings")
+                Text("Custom Dictionary")
                     .font(.system(size: 28, weight: .bold))
-                Text("Enhance VoiceInk's transcription accuracy by teaching it your vocabulary")
+                Text("Teach VoiceInk your special words and phrases for better transcription")
                     .font(.system(size: 15))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -64,73 +63,54 @@ struct DictionarySettingsView: View {
     
     private var mainContent: some View {
         VStack(spacing: 40) {
-            sectionSelector
-            
-            selectedSectionContent
+            bothSectionsContent
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 40)
     }
     
-    private var sectionSelector: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Select Section")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            HStack(spacing: 20) {
-                ForEach(DictionarySection.allCases, id: \.self) { section in
-                    SectionCard(
-                        section: section,
-                        isSelected: selectedSection == section,
-                        action: { selectedSection = section }
-                    )
-                }
-            }
-        }
-    }
-    
-    private var selectedSectionContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            switch selectedSection {
-            case .spellings:
-                DictionaryView(whisperPrompt: whisperPrompt)
-                    .background(CardBackground(isSelected: false))
-            case .replacements:
+    private var bothSectionsContent: some View {
+        VStack(spacing: 32) {
+            // Word Replacements Section (Top)
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(section: .replacements)
                 WordReplacementView()
+                    .background(CardBackground(isSelected: false))
+            }
+            
+            // Correct Spellings Section (Bottom)
+            VStack(alignment: .leading, spacing: 16) {
+                SectionHeader(section: .spellings)
+                DictionaryView(whisperPrompt: whisperPrompt)
                     .background(CardBackground(isSelected: false))
             }
         }
     }
 }
 
-struct SectionCard: View {
+struct SectionHeader: View {
     let section: DictionarySettingsView.DictionarySection
-    let isSelected: Bool
-    let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
-                Image(systemName: section.icon)
-                    .font(.system(size: 28))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(isSelected ? .blue : .secondary)
+        HStack(spacing: 12) {
+            Image(systemName: section.icon)
+                .font(.system(size: 20))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.blue)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(section.rawValue)
+                    .font(.title2)
+                    .fontWeight(.semibold)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(section.rawValue)
-                        .font(.headline)
-                    
-                    Text(section.description)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(section.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(CardBackground(isSelected: isSelected))
+            
+            Spacer()
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 8)
     }
 } 

@@ -20,7 +20,7 @@ struct MetricsSetupView: View {
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                         
-                        Text("Complete the setup to get started")
+                        Text("Let's get you set up in just a few quick steps")
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -69,22 +69,22 @@ struct MetricsSetupView: View {
             stepInfo = (
                 isCompleted: hotkeyManager.selectedHotkey1 != .none,
                 icon: "command",
-                title: "Set Keyboard Shortcut",
-                description: "Use VoiceInk anywhere with a shortcut."
+                title: "Choose Your Shortcut",
+                description: "Set up a keyboard shortcut to quickly start recording from anywhere."
             )
         case 1:
             stepInfo = (
                 isCompleted: isAccessibilityEnabled,
                 icon: "hand.raised.fill",
-                title: "Enable Accessibility",
-                description: "Paste transcribed text at your cursor."
+                title: "Allow Text Pasting",
+                description: "Let VoiceInk automatically paste your transcription where you're typing."
             )
         default:
             stepInfo = (
                 isCompleted: whisperState.currentTranscriptionModel != nil,
                 icon: "arrow.down.to.line",
-                title: "Download Model",
-                description: "Choose an AI model to start transcribing."
+                title: "Get Your AI Model",
+                description: "Download the AI model that will convert your speech to text."
             )
         }
         
@@ -154,17 +154,17 @@ struct MetricsSetupView: View {
     
     private func getActionButtonTitle() -> String {
         if hotkeyManager.selectedHotkey1 == .none {
-            return "Configure Shortcut"
+            return "Set Up Shortcut"
         } else if !AXIsProcessTrusted() {
-            return "Enable Accessibility"
+            return "Allow Text Pasting"
         } else if whisperState.currentTranscriptionModel == nil {
-            return "Download Model"
+            return "Get AI Model"
         }
         return "Get Started"
     }
     
     private var helpText: some View {
-        Text("Need help? Check the Help menu for support options")
+        Text("Need help? Look for the Help menu in your menu bar")
             .font(.caption)
             .foregroundColor(.secondary)
     }

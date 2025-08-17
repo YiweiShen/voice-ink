@@ -3,8 +3,6 @@ import SwiftUI
 struct ModelSettingsView: View {
     @ObservedObject var whisperPrompt: WhisperPrompt
     @AppStorage("SelectedLanguage") private var selectedLanguage: String = "auto"
-    @AppStorage("IsTextFormattingEnabled") private var isTextFormattingEnabled = true
-    @AppStorage("IsVADEnabled") private var isVADEnabled = true
     @State private var customPrompt: String = ""
     @State private var isEditing: Bool = false
     
@@ -62,32 +60,6 @@ struct ModelSettingsView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
                     )
-            }
-
-            Divider().padding(.vertical, 4)
-
-            HStack {
-                Toggle(isOn: $isTextFormattingEnabled) {
-                    Text("Automatic text formatting")
-                }
-                .toggleStyle(.switch)
-                
-                InfoTip(
-                    title: "Automatic Text Formatting",
-                    message: "Apply intelligent text formatting to break large block of text into paragraphs."
-                )
-            }
-
-            HStack {
-                Toggle(isOn: $isVADEnabled) {
-                    Text("Voice Activity Detection (VAD)")
-                }
-                .toggleStyle(.switch)
-                
-                InfoTip(
-                    title: "Voice Activity Detection",
-                    message: "Detects speech segments and filters out silence to reduce hallucinations in local Whisper models."
-                )
             }
 
         }

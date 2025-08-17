@@ -54,7 +54,7 @@ struct WordReplacementView: View {
             GroupBox {
                 HStack {
                     Label {
-                        Text("Define word replacements to automatically replace specific words or phrases")
+                        Text("Create text shortcuts that automatically expand when you speak them")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -69,14 +69,14 @@ struct WordReplacementView: View {
                     Toggle("Enable", isOn: $manager.isEnabled)
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .help("Enable automatic word replacement after transcription")
+                        .help("Enable automatic text shortcuts after transcription")
                 }
             }
             
             VStack(spacing: 0) {
                 // Header with action button
                 HStack {
-                    Text("Word Replacements")
+                    Text("Text Shortcuts")
                         .font(.headline)
                     
                     Spacer()
@@ -95,7 +95,7 @@ struct WordReplacementView: View {
                 
                 // Content
                 if manager.replacements.isEmpty {
-                    EmptyStateView(showAddModal: $showAddReplacementModal)
+                    ReplacementEmptyStateView(showAddModal: $showAddReplacementModal)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
@@ -115,6 +115,7 @@ struct WordReplacementView: View {
                         }
                         .background(Color(.controlBackgroundColor))
                     }
+                    .frame(maxHeight: 200)
                 }
             }
         }
@@ -130,7 +131,7 @@ struct WordReplacementView: View {
     }
 }
 
-struct EmptyStateView: View {
+struct ReplacementEmptyStateView: View {
     @Binding var showAddModal: Bool
     
     var body: some View {

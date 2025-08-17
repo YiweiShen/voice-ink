@@ -193,7 +193,7 @@ struct TranscriptionHistoryView: View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.secondary)
-            TextField("Search transcriptions", text: $searchText)
+            TextField("Search your recordings", text: $searchText)
                 .font(.system(size: 16, weight: .regular, design: .default))
                 .textFieldStyle(PlainTextFieldStyle())
         }
@@ -208,9 +208,9 @@ struct TranscriptionHistoryView: View {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 50))
                 .foregroundColor(.secondary)
-            Text("No transcriptions found")
+            Text("No recordings yet")
                 .font(.system(size: 24, weight: .semibold, design: .default))
-            Text("Your history will appear here")
+            Text("Your voice recordings and transcriptions will appear here once you start using VoiceInk")
                 .font(.system(size: 18, weight: .regular, design: .default))
                 .foregroundColor(.secondary)
         }

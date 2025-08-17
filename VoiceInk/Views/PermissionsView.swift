@@ -191,7 +191,7 @@ struct PermissionsView: View {
                     VStack(spacing: 8) {
                         Text("App Permissions")
                             .font(.system(size: 28, weight: .bold))
-                        Text("VoiceInk requires the following permissions to function properly")
+                        Text("VoiceInk needs these permissions to work properly")
                             .font(.system(size: 15))
                             .foregroundStyle(.secondary)
                     }
@@ -205,9 +205,9 @@ struct PermissionsView: View {
                     PermissionCard(
                         icon: "keyboard",
                         title: "Keyboard Shortcut",
-                        description: "Set up a keyboard shortcut to use VoiceInk anywhere",
+                        description: "Create a quick shortcut to start recording from any app",
                         isGranted: hotkeyManager.selectedHotkey1 != .none,
-                        buttonTitle: "Configure Shortcut",
+                        buttonTitle: "Set Up Shortcut",
                         buttonAction: {
                             NotificationCenter.default.post(
                                 name: .navigateToDestination,
@@ -222,7 +222,7 @@ struct PermissionsView: View {
                     PermissionCard(
                         icon: "mic",
                         title: "Microphone Access",
-                        description: "Allow VoiceInk to record your voice for transcription",
+                        description: "Let VoiceInk listen to your voice so it can convert speech to text",
                         isGranted: permissionManager.audioPermissionStatus == .authorized,
                         buttonTitle: permissionManager.audioPermissionStatus == .notDetermined ? "Request Permission" : "Open System Settings",
                         buttonAction: {
@@ -240,10 +240,10 @@ struct PermissionsView: View {
                     // Accessibility Permission
                     PermissionCard(
                         icon: "hand.raised",
-                        title: "Accessibility Access",
-                        description: "Allow VoiceInk to paste transcribed text directly at your cursor position",
+                        title: "Text Pasting",
+                        description: "Let VoiceInk automatically paste your transcription where you're typing",
                         isGranted: permissionManager.isAccessibilityEnabled,
-                        buttonTitle: "Open System Settings",
+                        buttonTitle: "Open Settings",
                         buttonAction: {
                             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                                 NSWorkspace.shared.open(url)
