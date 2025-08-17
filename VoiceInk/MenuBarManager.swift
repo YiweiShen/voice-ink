@@ -23,7 +23,7 @@ class MenuBarManager: ObservableObject {
          enhancementService: AIEnhancementService,
          aiService: AIService,
          hotkeyManager: HotkeyManager) {
-        self.isMenuBarOnly = UserDefaults.standard.bool(forKey: "IsMenuBarOnly")
+        self.isMenuBarOnly = UserDefaults.standard.object(forKey: "IsMenuBarOnly") != nil ? UserDefaults.standard.bool(forKey: "IsMenuBarOnly") : true
         self.whisperState = whisperState
         self.container = container
         self.enhancementService = enhancementService
