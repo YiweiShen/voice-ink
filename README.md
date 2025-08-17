@@ -77,4 +77,4 @@ If you encounter any issues or have questions, please:
 
 ---
 
-VoiceInk Light - A focused, lightweight approach to voice-to-text transcription on macOS.
+VoiceInk Lite - A focused, lightweight approach to voice-to-text transcription on macOS.
