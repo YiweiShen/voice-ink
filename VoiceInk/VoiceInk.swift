@@ -13,7 +13,6 @@ struct VoiceInkApp: App {
     @StateObject private var menuBarManager: MenuBarManager
     @StateObject private var aiService = AIService()
     @StateObject private var enhancementService: AIEnhancementService
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     // Audio cleanup manager for automatic deletion of old audio files
     private let audioCleanupManager = AudioCleanupManager.shared
@@ -71,58 +70,45 @@ struct VoiceInkApp: App {
             hotkeyManager: hotkeyManager
         )
         _menuBarManager = StateObject(wrappedValue: menuBarManager)
+        
+        // Initialize app-level services
+        initializeServices()
 
+    }
+    
+    private func initializeServices() {
+        // Force language to always use auto-detect
+        UserDefaults.standard.set("auto", forKey: "SelectedLanguage")
+        
+        // Start the transcription auto-cleanup service (handles immediate and scheduled transcript deletion)
+        transcriptionAutoCleanupService.startMonitoring(modelContext: container.mainContext)
+
+        // Start the automatic audio cleanup process only if transcript cleanup is not enabled
+        if !UserDefaults.standard.bool(forKey: "IsTranscriptionCleanupEnabled") {
+            audioCleanupManager.startAutomaticCleanup(modelContext: container.mainContext)
+        }
     }
 
     var body: some Scene {
+        // Main window - always shows ContentView
         WindowGroup {
-            if hasCompletedOnboarding {
-                ContentView()
-                    .environmentObject(whisperState)
-                    .environmentObject(hotkeyManager)
-                    .environmentObject(menuBarManager)
-                    .environmentObject(aiService)
-                    .environmentObject(enhancementService)
-                    .modelContainer(container)
-                    .onAppear {
-                        // Force language to always use auto-detect
-                        UserDefaults.standard.set("auto", forKey: "SelectedLanguage")
-                        
-                        // Start the transcription auto-cleanup service (handles immediate and scheduled transcript deletion)
-                        transcriptionAutoCleanupService.startMonitoring(modelContext: container.mainContext)
-
-                        // Start the automatic audio cleanup process only if transcript cleanup is not enabled
-                        if !UserDefaults.standard.bool(forKey: "IsTranscriptionCleanupEnabled") {
-                            audioCleanupManager.startAutomaticCleanup(modelContext: container.mainContext)
-                        }
+            ContentView()
+                .environmentObject(whisperState)
+                .environmentObject(hotkeyManager)
+                .environmentObject(menuBarManager)
+                .environmentObject(aiService)
+                .environmentObject(enhancementService)
+                .environment(\.modelContext, ModelContext(container))
+                .onDisappear {
+                    Task {
+                        await whisperState.unloadModel()
                     }
-                    .background(WindowAccessor { window in
-                        WindowManager.shared.configureWindow(window)
-                    })
-                    .onDisappear {
-                        whisperState.unloadModel()
-
-                        // Stop the transcription auto-cleanup service
-                        transcriptionAutoCleanupService.stopMonitoring()
-
-                        // Stop the automatic audio cleanup process
-                        audioCleanupManager.stopAutomaticCleanup()
-                    }
-            } else {
-                OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
-                    .environmentObject(hotkeyManager)
-                    .environmentObject(whisperState)
-                    .environmentObject(aiService)
-                    .environmentObject(enhancementService)
-                    .frame(minWidth: 880, minHeight: 780)
-                    .background(WindowAccessor { window in
-                        // Ensure this is called only once or is idempotent
-                        if window.title != "VoiceInk Onboarding" { // Prevent re-configuration
-                            WindowManager.shared.configureOnboardingPanel(window)
-                        }
-                    })
-            }
+                }
         }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultSize(width: 940, height: 730)
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
 
         MenuBarExtra {
             MenuBarView()

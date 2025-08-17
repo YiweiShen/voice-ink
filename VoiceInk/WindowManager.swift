@@ -21,20 +21,6 @@ class WindowManager {
         window.orderFrontRegardless()
     }
     
-    func configureOnboardingPanel(_ window: NSWindow) {
-        window.styleMask = [.titled, .fullSizeContentView, .resizable]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isMovableByWindowBackground = true
-        window.level = .normal
-        window.backgroundColor = .clear
-        window.isReleasedWhenClosed = false
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.title = "VoiceInk Onboarding"
-        window.isOpaque = false
-        window.minSize = NSSize(width: 900, height: 780)
-        window.makeKeyAndOrderFront(nil)
-    }
     
     func createMainWindow(contentView: NSView) -> NSWindow {
         let defaultSize = NSSize(width: 940, height: 780)
