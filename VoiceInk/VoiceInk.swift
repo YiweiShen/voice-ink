@@ -90,7 +90,7 @@ struct VoiceInkApp: App {
     }
 
     var body: some Scene {
-        // Main window - always shows ContentView
+        // Main window - always available but hidden on launch in menu bar mode
         WindowGroup {
             ContentView()
                 .environmentObject(whisperState)
@@ -104,11 +104,19 @@ struct VoiceInkApp: App {
                         await whisperState.unloadModel()
                     }
                 }
+                .background(WindowAccessor { window in
+                    // Hide window immediately on launch if in menu bar mode
+                    if menuBarManager.isMenuBarOnly {
+                        window.setIsVisible(false)
+                        window.orderOut(nil)
+                    }
+                })
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .defaultSize(width: 940, height: 730)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
+        .commandsRemoved()
 
         MenuBarExtra {
             MenuBarView()
@@ -139,8 +147,6 @@ struct VoiceInkApp: App {
     }
 }
 
-
-
 struct WindowAccessor: NSViewRepresentable {
     let callback: (NSWindow) -> Void
 
@@ -156,6 +162,5 @@ struct WindowAccessor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
-
 
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import KeyboardShortcuts
+import AppKit
 
 // ViewType enum with all cases
 enum ViewType: String, CaseIterable {
@@ -11,7 +12,7 @@ enum ViewType: String, CaseIterable {
     case audioInput = "Audio Input"
     case dictionary = "Dictionary"
     case settings = "Settings"
-    
+
     var icon: String {
         switch self {
         case .metrics: return "gauge.medium"
@@ -28,7 +29,7 @@ enum ViewType: String, CaseIterable {
 struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
-    
+
     func makeNSView(context: Context) -> NSVisualEffectView {
         let visualEffectView = NSVisualEffectView()
         visualEffectView.material = material
@@ -36,7 +37,7 @@ struct VisualEffectView: NSViewRepresentable {
         visualEffectView.state = .active
         return visualEffectView
     }
-    
+
     func updateNSView(_ visualEffectView: NSVisualEffectView, context: Context) {
         visualEffectView.material = material
         visualEffectView.blendingMode = blendingMode
@@ -60,15 +61,15 @@ struct DynamicSidebar: View {
                         .frame(width: 28, height: 28)
                         .cornerRadius(8)
                 }
-                
+
                 Text("VoiceInk")
                     .font(.system(size: 14, weight: .semibold))
-                
+
                 Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            
+
             // Navigation Items
             ForEach(ViewType.allCases, id: \.self) { viewType in
                 DynamicSidebarButton(
@@ -84,7 +85,7 @@ struct DynamicSidebar: View {
                     hoveredView = isHovered ? viewType : nil
                 }
             }
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,7 +99,7 @@ struct DynamicSidebarButton: View {
     let isHovered: Bool
     let namespace: Namespace.ID
     let action: () -> Void
-    
+
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -107,7 +108,7 @@ struct DynamicSidebarButton: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 18, weight: .medium))
                     .frame(width: 24, height: 24)
-                
+
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
                     .lineLimit(1)
@@ -140,11 +141,11 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var hotkeyManager: HotkeyManager
-    @State private var selectedView: ViewType = .settings
+    @State private var selectedView: ViewType = .metrics
     @State private var hoveredView: ViewType?
     @State private var hasLoadedData = false
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-    
+
     private var isSetupComplete: Bool {
         hasLoadedData &&
         whisperState.currentTranscriptionModel != nil &&
@@ -200,7 +201,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var detailView: some View {
         switch selectedView {
@@ -227,3 +228,4 @@ struct ContentView: View {
         }
     }
 }
+

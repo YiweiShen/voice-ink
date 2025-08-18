@@ -13,26 +13,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         updateActivationPolicy()
-        
+
         if !flag {
             createMainWindowIfNeeded()
         }
         return true
     }
-    
+
     func applicationDidBecomeActive(_ notification: Notification) {
         updateActivationPolicy()
     }
-    
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
-    
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // Allow normal Command+Q termination
         return .terminateNow
     }
-    
+
     private func updateActivationPolicy() {
         let isMenuBarOnly = UserDefaults.standard.object(forKey: "IsMenuBarOnly") != nil ? UserDefaults.standard.bool(forKey: "IsMenuBarOnly") : false
         if isMenuBarOnly {
@@ -41,13 +40,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.setActivationPolicy(.regular)
         }
     }
-    
+
     private func createMainWindowIfNeeded() {
         // Find existing main windows first
         let existingWindows = NSApp.windows.filter { window in
             window.title == "VoiceInk" && !window.title.contains("Recorder")
         }
-        
+
         if let existingWindow = existingWindows.first {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)

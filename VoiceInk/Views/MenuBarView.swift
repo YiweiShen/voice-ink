@@ -10,13 +10,13 @@ struct MenuBarView: View {
     @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
     @State private var menuRefreshTrigger = false  // Added to force menu updates
     @State private var isHovered = false
-    
+
     var body: some View {
         VStack {
             Button("Settings") {
                 menuBarManager.openMainWindowAndNavigate(to: "Settings")
             }
-            
+
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }

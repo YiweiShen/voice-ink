@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1509777E2E4FAB590073EF92 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1509777D2E4FAB590073EF92 /* whisper.xcframework */; };
-		1509777F2E4FAB590073EF92 /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1509777D2E4FAB590073EF92 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		150E2EF72E52B78C004C63A0 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 150E2EF62E52B78C004C63A0 /* whisper.xcframework */; };
+		150E2EF82E52B78C004C63A0 /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 150E2EF62E52B78C004C63A0 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E10F06092E3F390600F7FBDC /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = E10F06082E3F390600F7FBDC /* FluidAudio */; };
 		E1A261122CC143AC00B233D1 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = E1A261112CC143AC00B233D1 /* KeyboardShortcuts */; };
 		E1ADD45A2CC5352A00303ECB /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = E1ADD4592CC5352A00303ECB /* LaunchAtLogin */; };
@@ -24,7 +24,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				1509777F2E4FAB590073EF92 /* whisper.xcframework in Embed Frameworks */,
+				150E2EF82E52B78C004C63A0 /* whisper.xcframework in Embed Frameworks */,
 				E1D7EF9A2E35E19B00640029 /* MediaRemoteAdapter in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -33,7 +33,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1509777D2E4FAB590073EF92 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
+		150E2EF62E52B78C004C63A0 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
 		E11473B02CBE0F0A00318EE4 /* VoiceInk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoiceInk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -66,8 +66,8 @@
 				E1ECEC162E44591300DFFBA8 /* Zip in Frameworks */,
 				E1ADD45A2CC5352A00303ECB /* LaunchAtLogin in Frameworks */,
 				E1D7EF992E35E16C00640029 /* MediaRemoteAdapter in Frameworks */,
-				1509777E2E4FAB590073EF92 /* whisper.xcframework in Frameworks */,
 				E10F06092E3F390600F7FBDC /* FluidAudio in Frameworks */,
+				150E2EF72E52B78C004C63A0 /* whisper.xcframework in Frameworks */,
 				E1A261122CC143AC00B233D1 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -95,7 +95,7 @@
 		E114741C2CBE1DE200318EE4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1509777D2E4FAB590073EF92 /* whisper.xcframework */,
+				150E2EF62E52B78C004C63A0 /* whisper.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
