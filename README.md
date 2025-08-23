@@ -25,6 +25,14 @@ This lightweight version strips away non-essential features to provide a clean, 
 
 ## Get Started
 
+### Install with Homebrew
+
+Run the following command:
+
+```bash
+brew install yiweishen/tap/voice-ink
+```
+
 ### Build from Source
 
 VoiceInk Light is designed to be built from source. Follow the instructions in [BUILDING.md](BUILDING.md) to compile and run the application on your macOS system.
