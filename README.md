@@ -14,14 +14,7 @@ VoiceInk Lite is a streamlined version of VoiceInk, focusing on essential voice-
 
 This lightweight version strips away non-essential features to provide a clean, fast transcription experience for users who want straightforward voice-to-text conversion without additional AI-powered features.
 
-## Features
-
-- 🎙️ **Core Transcription**: Local AI models for accurate voice-to-text conversion
-- 🔒 **Privacy First**: 100% offline processing ensures your data never leaves your device
-- 🎯 **Global Shortcuts**: Configurable keyboard shortcuts for quick recording and push-to-talk functionality
-- 📝 **Personal Dictionary**: Custom words and text replacements for personalized transcription
-- 🔧 **Simple Interface**: Clean, distraction-free UI focused on essential functionality
-- ⚡ **Lightweight**: Minimal resource usage with fast startup and response times
+![](./voice-ink-lite.png)
 
 ## Get Started
 
