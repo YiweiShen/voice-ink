@@ -30,6 +30,33 @@ brew install yiweishen/tap/voice-ink
 
 VoiceInk Light is designed to be built from source. Follow the instructions in [BUILDING.md](BUILDING.md) to compile and run the application on your macOS system.
 
+### Create a Release Build (`.app` + `.dmg`)
+
+To build a release-ready `VoiceInk.app` and package it into a `voice-ink.dmg`:
+
+```bash
+# 1. Archive the app (unsigned)
+xcodebuild -project VoiceInk.xcodeproj \
+  -scheme VoiceInk \
+  -configuration Release \
+  -archivePath /tmp/VoiceInk.xcarchive \
+  archive \
+  CODE_SIGN_IDENTITY="-" \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGNING_ALLOWED=NO
+
+# 2. Copy the app out of the archive
+cp -R /tmp/VoiceInk.xcarchive/Products/Applications/VoiceInk.app ./VoiceInk.app
+
+# 3. Create the DMG
+hdiutil create \
+  -volname "VoiceInk" \
+  -srcfolder ./VoiceInk.app \
+  -ov \
+  -format UDZO \
+  ./voice-ink.dmg
+```
+
 ## Requirements
 
 - macOS 14.0 or later
