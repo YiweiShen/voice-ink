@@ -66,7 +66,7 @@ struct SettingsView: View {
                             isGranted: hotkeyManager.selectedHotkey1 != .none,
                             buttonTitle: "Set Up",
                             buttonAction: {},
-                            checkPermission: { permissionManager.checkKeyboardShortcut() }
+                            checkPermission: {}
                         )
                         Divider()
                         PermissionRow(
@@ -247,17 +247,15 @@ struct SettingsView: View {
 struct SettingsSection<Content: View>: View {
     let icon: String
     let title: String
-    var subtitle: String = ""
     let content: Content
     var showWarning: Bool = false
     var style: SectionStyle = .grouped
 
     enum SectionStyle: Equatable { case grouped, list }
 
-    init(icon: String, title: String, subtitle: String = "", showWarning: Bool = false, style: SectionStyle = .grouped, @ViewBuilder content: () -> Content) {
+    init(icon: String, title: String, showWarning: Bool = false, style: SectionStyle = .grouped, @ViewBuilder content: () -> Content) {
         self.icon = icon
         self.title = title
-        self.subtitle = subtitle
         self.showWarning = showWarning
         self.style = style
         self.content = content()

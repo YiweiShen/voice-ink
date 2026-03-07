@@ -57,8 +57,7 @@ struct ModelManagementView: View {
     private var otherConfigurationsSection: some View {
         SettingsSection(
             icon: "gearshape.fill",
-            title: "Transcription Configuration",
-            subtitle: "Customize transcription style, formatting, and processing options"
+            title: "Transcription Configuration"
         ) {
             VStack(alignment: .leading, spacing: 20) {
                 // Transcription Style Section
@@ -165,8 +164,7 @@ struct ModelManagementView: View {
     private func localModelsSection(proxy: ScrollViewProxy) -> some View {
         SettingsSection(
             icon: "cpu.fill",
-            title: "Local & Native Models",
-            subtitle: "Models that run on your device for maximum privacy"
+            title: "Local & Native Models"
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("These models run directly on your Mac without sending data to external servers.")
@@ -221,8 +219,7 @@ struct ModelManagementView: View {
     private func cloudModelsSection(proxy: ScrollViewProxy) -> some View {
         SettingsSection(
             icon: "cloud.fill",
-            title: "Cloud Models",
-            subtitle: "OpenAI-compatible APIs for advanced transcription"
+            title: "Cloud Models"
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Connect to OpenAI-compatible transcription APIs for enhanced features and accuracy.")
