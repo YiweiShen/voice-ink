@@ -33,6 +33,9 @@ extension WhisperState {
         downloadProgress["parakeet-tdt-0.6b"] = nil
 
         refreshAllAvailableModels()
+        if let parakeetModel = allAvailableModels.first(where: { $0.provider == .parakeet }) {
+            setDefaultTranscriptionModel(parakeetModel)
+        }
     }
 
     @MainActor

@@ -9,6 +9,11 @@ struct NativeAppleModelCardView: View {
     
     var body: some View {
         HStack(spacing: 10) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isCurrent ? Color.green : Color.primary.opacity(0.35))
+                .frame(width: 14, alignment: .center)
+
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(model.displayName)
@@ -17,10 +22,10 @@ struct NativeAppleModelCardView: View {
                     if isCurrent {
                         Text("Default")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(.secondary)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
-                            .background(RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.1)))
+                            .background(RoundedRectangle(cornerRadius: 3).fill(Color.primary.opacity(0.07)))
                     } else {
                         Text("Built-in")
                             .font(.system(size: 10, weight: .semibold))

@@ -20,6 +20,11 @@ struct LocalModelCardView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isCurrent ? Color.green : Color.primary.opacity(0.35))
+                    .frame(width: 14, alignment: .center)
+
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(model.displayName)
@@ -52,10 +57,10 @@ struct LocalModelCardView: View {
             if isCurrent {
                 Text("Default")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.secondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 3).fill(Color.primary.opacity(0.07)))
             }
         }
     }
@@ -64,8 +69,9 @@ struct LocalModelCardView: View {
         HStack(spacing: 6) {
             if !isDownloaded {
                 Button(action: downloadAction) {
-                    Label(isDownloading ? "Downloading…" : "Download", systemImage: "arrow.down.circle")
+                    Text(isDownloading ? "Downloading…" : "Download")
                         .font(.system(size: 12))
+                        .frame(minWidth: 88)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
@@ -99,6 +105,10 @@ struct LocalModelCardView: View {
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
                 .frame(width: 20, height: 20)
+
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color.green.opacity(0.8))
             }
         }
     }
@@ -116,6 +126,11 @@ struct ImportedLocalModelCardView: View {
 
     var body: some View {
         HStack(spacing: 10) {
+            Image(systemName: "waveform")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isCurrent ? Color.green : Color.primary.opacity(0.35))
+                .frame(width: 14, alignment: .center)
+
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(model.displayName)
@@ -173,5 +188,3 @@ struct ImportedLocalModelCardView: View {
         .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
     }
 }
-
-

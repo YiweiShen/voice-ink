@@ -1,6 +1,4 @@
 import SwiftUI
-import Combine
-import AppKit
 
 struct ParakeetModelCardRowView: View {
     let model: ParakeetModel
@@ -21,6 +19,11 @@ struct ParakeetModelCardRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
+                Image(systemName: "waveform.badge.mic")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isCurrent ? Color.green : Color.primary.opacity(0.35))
+                    .frame(width: 14, alignment: .center)
+
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(model.displayName)
@@ -35,10 +38,10 @@ struct ParakeetModelCardRowView: View {
                         if isCurrent {
                             Text("Default")
                                 .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.accentColor)
+                                .foregroundColor(.secondary)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
-                                .background(RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.1)))
+                                .background(RoundedRectangle(cornerRadius: 3).fill(Color.primary.opacity(0.07)))
                         }
                     }
                     Text("\(model.size) · \(model.language)")
@@ -67,8 +70,9 @@ struct ParakeetModelCardRowView: View {
         HStack(spacing: 6) {
             if !isDownloaded {
                 Button(action: { Task { await whisperState.downloadParakeetModel() } }) {
-                    Label(isDownloading ? "Downloading…" : "Download", systemImage: "arrow.down.circle")
+                    Text(isDownloading ? "Downloading…" : "Download")
                         .font(.system(size: 12))
+                        .frame(minWidth: 88)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
@@ -98,6 +102,10 @@ struct ParakeetModelCardRowView: View {
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
                 .frame(width: 20, height: 20)
+
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color.green.opacity(0.8))
             }
         }
     }

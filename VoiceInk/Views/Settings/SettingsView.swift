@@ -19,11 +19,15 @@ struct SettingsView: View {
         permissionManager.isAccessibilityEnabled
     }
 
+    private var noModelDownloaded: Bool {
+        whisperState.currentTranscriptionModel == nil
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 // MARK: - Transcription Models
-                SettingsSection(icon: "cpu", title: "Transcription Models", style: .list) {
+                SettingsSection(icon: "cpu", title: "Transcription Models", showWarning: noModelDownloaded, style: .list) {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(localTranscriptionModels, id: \.name) { model in
                             ModelCardRowView(
@@ -64,6 +68,8 @@ struct SettingsView: View {
                             title: "Keyboard Shortcut",
                             description: "Start recording from any app",
                             isGranted: hotkeyManager.selectedHotkey1 != .none,
+                            keyBadge: "Right Option (⌥)",
+                            badge: "Default",
                             buttonTitle: "Set Up",
                             buttonAction: {},
                             checkPermission: {}
@@ -103,53 +109,25 @@ struct SettingsView: View {
                     }
                 }
 
-                // MARK: - Recording & Shortcuts
-                SettingsSection(icon: "command", title: "Recording & Shortcuts") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        hotkeyView(title: "Primary", binding: $hotkeyManager.selectedHotkey1, shortcutName: .toggleMiniRecorder)
-
-                        if hotkeyManager.selectedHotkey2 != .none {
-                            hotkeyView(
-                                title: "Secondary",
-                                binding: $hotkeyManager.selectedHotkey2,
-                                shortcutName: .toggleMiniRecorder2,
-                                isRemovable: true,
-                                onRemove: { withAnimation { hotkeyManager.selectedHotkey2 = .none } }
-                            )
-                        }
-
-                        if hotkeyManager.selectedHotkey1 != .none && hotkeyManager.selectedHotkey2 == .none {
-                            Button(action: { withAnimation { hotkeyManager.selectedHotkey2 = .rightOption } }) {
-                                Label("Add secondary hotkey", systemImage: "plus.circle")
-                                    .font(.system(size: 12))
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundColor(.accentColor)
-                        }
-
-                        Text("Quick press: start recording, press again to stop. Hold: record while held, release to stop.")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color.secondary.opacity(0.8))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(14)
-                }
-
                 // MARK: - Startup
-                SettingsSection(icon: "power", title: "Startup") {
-                    SettingsToggleRow(
-                        title: "Launch at login",
-                        binding: Binding(
+                SettingsSection(icon: "power", title: "Startup", showWarning: !launchAtLoginEnabled) {
+                    ConfigRow(
+                        icon: "power",
+                        title: "Launch at Login",
+                        description: "Start VoiceInk automatically when you log in",
+                        isConfigured: launchAtLoginEnabled
+                    ) {
+                        Toggle("", isOn: Binding(
                             get: { launchAtLoginEnabled },
                             set: { newValue in
                                 launchAtLoginEnabled = newValue
                                 LaunchAtLogin.isEnabled = newValue
                             }
-                        ),
-                        infoTitle: "Launch at Login",
-                        infoMessage: "Start VoiceInk automatically when you log into your Mac."
-                    )
-                    .padding(14)
+                        ))
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .labelsHidden()
+                    }
                 }
             }
             .padding(.horizontal, 20)
@@ -175,71 +153,6 @@ struct SettingsView: View {
         }
     }
 
-    @ViewBuilder
-    private func hotkeyView(
-        title: String,
-        binding: Binding<HotkeyManager.HotkeyOption>,
-        shortcutName: KeyboardShortcuts.Name,
-        isRemovable: Bool = false,
-        onRemove: (() -> Void)? = nil
-    ) -> some View {
-        HStack(spacing: 12) {
-            Text(title)
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                .frame(width: 64, alignment: .leading)
-
-            Menu {
-                ForEach(HotkeyManager.HotkeyOption.allCases, id: \.self) { option in
-                    Button(action: {
-                        binding.wrappedValue = option
-                    }) {
-                        HStack {
-                            Text(option.displayName)
-                            if binding.wrappedValue == option {
-                                Spacer()
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Text(binding.wrappedValue.displayName)
-                        .font(.system(size: 13))
-                        .foregroundColor(.primary)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color(NSColor.windowBackgroundColor))
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
-                )
-            }
-            .menuStyle(.borderlessButton)
-
-            if binding.wrappedValue == .custom {
-                KeyboardShortcuts.Recorder(for: shortcutName)
-                    .controlSize(.small)
-            }
-
-            Spacer()
-
-            if isRemovable {
-                Button(action: { onRemove?() }) {
-                    Image(systemName: "minus.circle")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.primary.opacity(0.35))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
 }
 
 // MARK: - SettingsSection
@@ -311,6 +224,8 @@ struct PermissionRow: View {
     let title: String
     let description: String
     let isGranted: Bool
+    var keyBadge: String? = nil
+    var badge: String? = nil
     let buttonTitle: String
     let buttonAction: () -> Void
     let checkPermission: () -> Void
@@ -324,8 +239,18 @@ struct PermissionRow: View {
                 .frame(width: 14, alignment: .center)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                HStack(spacing: 6) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .medium))
+                    if let badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(RoundedRectangle(cornerRadius: 3).fill(Color.primary.opacity(0.07)))
+                    }
+                }
                 Text(description)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
@@ -334,9 +259,21 @@ struct PermissionRow: View {
             Spacer()
 
             if isGranted {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(Color.green.opacity(0.8))
+                HStack(spacing: 6) {
+                    if let keyBadge {
+                        Text(keyBadge)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(NSColor.windowBackgroundColor))
+                            .cornerRadius(5)
+                            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.12), lineWidth: 1))
+                    }
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.green.opacity(0.8))
+                }
             } else {
                 HStack(spacing: 7) {
                     Button {
@@ -357,8 +294,9 @@ struct PermissionRow: View {
                     Button(action: buttonAction) {
                         Text(buttonTitle)
                             .font(.system(size: 12))
+                            .frame(minWidth: 88)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                 }
             }
@@ -368,24 +306,54 @@ struct PermissionRow: View {
     }
 }
 
-// MARK: - SettingsToggleRow
+// MARK: - ConfigRow
 
-struct SettingsToggleRow: View {
+struct ConfigRow<Trailing: View>: View {
+    let icon: String
     let title: String
-    let binding: Binding<Bool>
-    let infoTitle: String
-    let infoMessage: String
+    let description: String
+    let isConfigured: Bool
+    var showWarning: Bool = false
+    let trailing: Trailing
+
+    init(icon: String, title: String, description: String, isConfigured: Bool, showWarning: Bool = false, @ViewBuilder trailing: () -> Trailing) {
+        self.icon = icon
+        self.title = title
+        self.description = description
+        self.isConfigured = isConfigured
+        self.showWarning = showWarning
+        self.trailing = trailing()
+    }
 
     var body: some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-            InfoTip(title: infoTitle, message: infoMessage)
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(showWarning ? Color.orange : (isConfigured ? Color.green : Color.primary.opacity(0.35)))
+                .frame(width: 14, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(showWarning ? Color.orange : Color(.labelColor))
+                    if showWarning {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                    }
+                }
+                Text(description)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
             Spacer()
-            Toggle("", isOn: binding)
-                .toggleStyle(.switch)
-                .labelsHidden()
+
+            trailing
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
     }
 }
 

@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 // MARK: - Custom Model Card View
 struct CustomModelCardView: View {
@@ -13,13 +12,19 @@ struct CustomModelCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Main card content
             HStack(alignment: .top, spacing: 16) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isCurrent ? Color.green : Color.primary.opacity(0.35))
+                    .frame(width: 14, alignment: .center)
+                    .padding(.top, 2)
+
                 VStack(alignment: .leading, spacing: 6) {
                     headerSection
                     metadataSection
                     descriptionSection
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
+
                 actionSection
             }
             .padding(16)
@@ -46,8 +51,8 @@ struct CustomModelCardView: View {
                     .font(.system(size: 11, weight: .medium))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.accentColor))
-                    .foregroundColor(.white)
+                    .background(Capsule().fill(Color.primary.opacity(0.07)))
+                    .foregroundColor(.secondary)
             } else {
                 Text("Custom")
                     .font(.system(size: 11, weight: .medium))

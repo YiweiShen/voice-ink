@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import OSLog
+import LaunchAtLogin
 
 @main
 struct VoiceInkApp: App {
@@ -9,7 +10,7 @@ struct VoiceInkApp: App {
     @StateObject private var whisperState: WhisperState
     @StateObject private var hotkeyManager: HotkeyManager
     @StateObject private var menuBarManager: MenuBarManager
-    @StateObject private var aiService = AIService()
+    @StateObject private var aiService: AIService
     @StateObject private var enhancementService: AIEnhancementService
 
     init() {
@@ -34,6 +35,11 @@ struct VoiceInkApp: App {
         _menuBarManager = StateObject(wrappedValue: menuBarManager)
 
         UserDefaults.standard.set("auto", forKey: "SelectedLanguage")
+
+        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+            LaunchAtLogin.isEnabled = true
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+        }
     }
 
     var body: some Scene {

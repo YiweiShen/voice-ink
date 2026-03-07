@@ -1,14 +1,12 @@
 import SwiftUI
-import AppKit
 
 // MARK: - Cloud Model Card View
 struct CloudModelCardView: View {
     let model: CloudModel
     let isCurrent: Bool
     var setDefaultAction: () -> Void
-    
+
     @EnvironmentObject private var whisperState: WhisperState
-    @StateObject private var aiService = AIService()
     @State private var isExpanded = false
     @State private var apiKey = ""
     @State private var isVerifying = false
@@ -40,6 +38,11 @@ struct CloudModelCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
+                Image(systemName: "cloud")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isCurrent ? Color.green : Color.primary.opacity(0.35))
+                    .frame(width: 14, alignment: .center)
+
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(model.displayName)
@@ -76,10 +79,10 @@ struct CloudModelCardView: View {
             if isCurrent {
                 Text("Default")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.secondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.1)))
+                    .background(RoundedRectangle(cornerRadius: 3).fill(Color.primary.opacity(0.07)))
             } else if isConfiguredState {
                 Text("Configured")
                     .font(.system(size: 10, weight: .semibold))
