@@ -8,32 +8,29 @@ struct AnimatedSaveButton: View {
     
     var body: some View {
         Menu {
-            Button("Save as TXT") {
-                saveFile(as: .plainText, extension: "txt")
-            }
-            
-            Button("Save as MD") {
-                saveFile(as: .text, extension: "md")
-            }
+            Button("Save as TXT") { saveFile(as: .plainText, extension: "txt") }
+            Button("Save as MD") { saveFile(as: .text, extension: "md") }
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: isSaved ? "checkmark" : "square.and.arrow.down")
-                    .font(.system(size: 12, weight: isSaved ? .bold : .regular))
-                    .foregroundColor(.white)
+                    .font(.system(size: 11, weight: isSaved ? .semibold : .regular))
                 Text(isSaved ? "Saved" : "Save")
-                    .font(.system(size: 12, weight: isSaved ? .medium : .regular))
-                    .foregroundColor(.white)
+                    .font(.system(size: 12, weight: .medium))
             }
+            .foregroundColor(isSaved ? .green : Color.primary.opacity(0.6))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(
-                Capsule()
-                    .fill(isSaved ? Color.green.opacity(0.8) : Color.orange)
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(isSaved ? Color.green.opacity(0.1) : Color.primary.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(isSaved ? Color.green.opacity(0.25) : Color.primary.opacity(0.08), lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(.plain)
-        .scaleEffect(isSaved ? 1.05 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSaved)
+        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isSaved)
     }
     
     private func saveFile(as contentType: UTType, extension fileExtension: String) {

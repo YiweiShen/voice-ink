@@ -50,8 +50,8 @@ struct NativeAppleModelCardView: View {
                     .font(.system(size: 11, weight: .medium))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.blue.opacity(0.2)))
-                    .foregroundColor(Color.blue)
+                    .background(Capsule().fill(Color.primary.opacity(0.06)))
+                    .foregroundColor(.secondary)
             }
         }
     }

@@ -57,19 +57,18 @@ struct EnhancementSettingsView: View {
                     // 1. AI Provider Integration Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("AI Provider Integration")
-                            .font(.headline)
-                        
+                            .font(.system(size: 13, weight: .semibold))
+
                         APIKeyManagementView()
                             .background(CardBackground(isSelected: false))
                     }
                     .padding()
-                    .background(Color(.windowBackgroundColor).opacity(0.4))
-                    .cornerRadius(10)
+                    .background(CardBackground(isSelected: false))
                     
                     // 3. Enhancement Modes & Assistant Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Enhancement Prompt")
-                            .font(.headline)
+                            .font(.system(size: 13, weight: .semibold))
                         
                         // Prompts Section
                         VStack(alignment: .leading, spacing: 12) {

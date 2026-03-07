@@ -398,7 +398,7 @@ struct SettingsSection<Content: View>: View {
     let subtitle: String
     let content: Content
     var showWarning: Bool = false
-    
+
     init(icon: String, title: String, subtitle: String, showWarning: Bool = false, @ViewBuilder content: () -> Content) {
         self.icon = icon
         self.title = title
@@ -406,42 +406,45 @@ struct SettingsSection<Content: View>: View {
         self.showWarning = showWarning
         self.content = content()
     }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(showWarning ? .red : .accentColor)
-                    .frame(width: 24, height: 24)
-                
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(showWarning ? .red : Color.primary.opacity(0.5))
+                    .frame(width: 18, alignment: .center)
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.headline)
+                        .font(.system(size: 13, weight: .semibold))
                     Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundColor(showWarning ? .red : .secondary)
+                        .font(.system(size: 12))
+                        .foregroundColor(showWarning ? Color.red.opacity(0.8) : .secondary)
                 }
-                
+
                 if showWarning {
                     Spacer()
                     Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 12))
                         .foregroundColor(.red)
                         .help("Permission required for VoiceInk to function properly")
                 }
             }
-            
+            .padding(.bottom, 12)
+
             Divider()
-                .padding(.vertical, 4)
-            
+                .padding(.bottom, 14)
+
             content
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(CardBackground(isSelected: showWarning, useAccentGradientWhenSelected: true))
+        .background(CardBackground(isSelected: showWarning, useAccentGradientWhenSelected: false))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(showWarning ? Color.red.opacity(0.5) : Color.clear, lineWidth: 1)
+            RoundedRectangle(cornerRadius: StyleConstants.cornerRadius)
+                .stroke(showWarning ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1)
         )
     }
 }

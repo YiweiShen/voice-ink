@@ -67,34 +67,12 @@ struct AppNotificationView: View {
         }
         .frame(minWidth: 280, maxWidth: 380, minHeight: 44)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.clear)
-                .background(
-                    ZStack {
-                        // Base dark background
-                        Color.black.opacity(0.9)
-                        
-                        // Subtle gradient overlay
-                        LinearGradient(
-                            colors: [
-                                Color.black.opacity(0.95),
-                                Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.9)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        
-                        // Very subtle visual effect for depth
-                        VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
-                            .opacity(0.05)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
                 )
-        )
-        .overlay(
-            // Subtle inner border
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
         )
         .overlay(
             VStack {
@@ -107,7 +85,7 @@ struct AppNotificationView: View {
                 }
                 .frame(height: 2)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         )
         .onAppear {
             startProgressTimer()

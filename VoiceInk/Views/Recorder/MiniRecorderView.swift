@@ -9,20 +9,8 @@ struct MiniRecorderView: View {
     @State private var showEnhancementPromptPopover = false
     
     private var backgroundView: some View {
-        ZStack {
-            Color.black.opacity(0.9)
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.95),
-                    Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.9)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
-                .opacity(0.05)
-        }
-        .clipShape(Capsule())
+        Capsule()
+            .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
     }
     
     private var statusView: some View {
@@ -50,12 +38,10 @@ struct MiniRecorderView: View {
     }
     
     private var recorderCapsule: some View {
-        Capsule()
-            .fill(.clear)
-            .background(backgroundView)
+        backgroundView
             .overlay {
                 Capsule()
-                    .strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5)
+                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
             }
             .overlay {
                 contentLayout

@@ -3,78 +3,52 @@ import CoreAudio
 
 struct AudioInputSettingsView: View {
     @ObservedObject var audioDeviceManager = AudioDeviceManager.shared
-    @Environment(\.colorScheme) private var colorScheme
     @State private var systemDefaultDeviceID: AudioDeviceID?
-    
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 32) {
-                heroSection
-                deviceSelectionSection
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Audio Input")
+                    .font(.system(size: 20, weight: .bold))
+                    .padding(.bottom, 4)
+
+                Text("Select which microphone VoiceInk should use to record your voice.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+
+                VStack(spacing: 8) {
+                    ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
+                        AudioDeviceCard(
+                            device: device,
+                            isSystemDefault: device.id == systemDefaultDeviceID,
+                            isSelected: (audioDeviceManager.inputMode == .systemDefault && device.id == systemDefaultDeviceID) ||
+                                        (audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == device.id),
+                            action: {
+                                if device.id == systemDefaultDeviceID {
+                                    audioDeviceManager.selectInputMode(.systemDefault)
+                                } else {
+                                    audioDeviceManager.selectInputMode(.custom)
+                                    audioDeviceManager.selectDevice(id: device.id)
+                                }
+                            }
+                        )
+                    }
+                }
             }
             .padding(24)
         }
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
             updateSystemDefaultDevice()
-            
-            // Always ensure we have system default selected if no specific preference exists
             if audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == nil {
                 audioDeviceManager.selectInputMode(.systemDefault)
             }
         }
     }
-    
-    private var heroSection: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "mic.circle.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(.blue)
-                .padding(20)
-                .background(Circle()
-                    .fill(Color(.windowBackgroundColor).opacity(0.9))
-                    .shadow(color: .black.opacity(0.1), radius: 10, y: 5))
-            
-            VStack(spacing: 8) {
-                Text("Microphone Settings")
-                    .font(.system(size: 28, weight: .bold))
-                Text("Select which microphone VoiceInk should use to record your voice")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 400)
-            }
-        }
-        .padding(.vertical, 40)
-        .frame(maxWidth: .infinity)
-    }
-    
-    private var deviceSelectionSection: some View {
-        VStack(spacing: 16) {
-            ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
-                AudioDeviceCard(
-                    device: device,
-                    isSystemDefault: device.id == systemDefaultDeviceID,
-                    isSelected: (audioDeviceManager.inputMode == .systemDefault && device.id == systemDefaultDeviceID) ||
-                                (audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == device.id),
-                    action: { 
-                        if device.id == systemDefaultDeviceID {
-                            audioDeviceManager.selectInputMode(.systemDefault)
-                        } else {
-                            audioDeviceManager.selectInputMode(.custom)
-                            audioDeviceManager.selectDevice(id: device.id)
-                        }
-                    }
-                )
-            }
-        }
-    }
-    
+
     private func updateSystemDefaultDevice() {
         systemDefaultDeviceID = AudioDeviceConfiguration.getDefaultInputDevice()
     }
-    
-    
 }
 
 struct AudioDeviceCard: View {
@@ -82,67 +56,44 @@ struct AudioDeviceCard: View {
     let isSystemDefault: Bool
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 16) {
-                    // Icon with background
-                    ZStack {
-                        Circle()
-                            .fill(isSelected ? Color.blue.opacity(0.15) : Color.secondary.opacity(0.15))
-                            .frame(width: 44, height: 44)
-                        
-                        Image(systemName: isSelected ? "mic.circle.fill" : "mic.circle")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(isSelected ? .blue : .secondary)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(device.name)
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            if isSystemDefault {
-                                Text("System Default")
-                                    .font(.caption)
-                                    .foregroundColor(.blue)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                        }
-                        Text("Microphone")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Status indicator
-                    HStack(spacing: 12) {
-                        if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.blue)
-                                .symbolRenderingMode(.hierarchical)
-                        } else {
-                            Image(systemName: "circle")
-                                .font(.system(size: 20))
+            HStack(spacing: 12) {
+                Image(systemName: isSelected ? "mic.fill" : "mic")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isSelected ? .accentColor : Color.primary.opacity(0.45))
+                    .frame(width: 18, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(device.name)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.primary)
+                        if isSystemDefault {
+                            Text("System Default")
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.primary.opacity(0.06))
                                 .foregroundColor(.secondary)
-                                .symbolRenderingMode(.hierarchical)
+                                .cornerRadius(4)
                         }
                     }
+                    Text("Microphone")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
                 }
-                
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 16))
+                    .foregroundColor(isSelected ? .accentColor : Color.primary.opacity(0.2))
             }
-            .padding()
-            .background(CardBackground(isSelected: false))
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, y: 2)
+            .padding(14)
+            .background(CardBackground(isSelected: isSelected, useAccentGradientWhenSelected: true))
         }
         .buttonStyle(.plain)
     }
-} 
+}

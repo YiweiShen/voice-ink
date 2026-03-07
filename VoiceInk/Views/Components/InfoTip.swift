@@ -9,9 +9,9 @@ struct InfoTip: View {
     var learnMoreText: String = "Learn More"
     
     // Appearance customization
-    var iconName: String = "info.circle.fill"
-    var iconSize: Image.Scale = .medium
-    var iconColor: Color = .primary
+    var iconName: String = "info.circle"
+    var iconSize: Image.Scale = .small
+    var iconColor: Color = Color.primary.opacity(0.35)
     var width: CGFloat = 300
     
     // State
@@ -25,22 +25,26 @@ struct InfoTip: View {
             .padding(5)
             .contentShape(Rectangle())
             .popover(isPresented: $isShowingTip) {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(title)
-                        .font(.headline)
-                    
+                        .font(.system(size: 13, weight: .semibold))
+
                     Text(message)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
                         .frame(width: width)
-                        .padding(.bottom, learnMoreLink != nil ? 5 : 0)
-                    
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, learnMoreLink != nil ? 4 : 0)
+
                     if let url = learnMoreLink {
                         Button(learnMoreText) {
                             NSWorkspace.shared.open(url)
                         }
-                        .foregroundColor(.blue)  
+                        .font(.system(size: 12))
+                        .foregroundColor(.accentColor)
                     }
                 }
-                .padding()
+                .padding(12)
             }
             .onTapGesture {
                 isShowingTip.toggle()

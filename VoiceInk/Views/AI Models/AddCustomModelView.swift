@@ -45,18 +45,18 @@ struct AddCustomModelCardView: View {
                     }
                     
                     // Disclaimer
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption)
+                    HStack(spacing: 6) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.primary.opacity(0.4))
                         Text("Only OpenAI-compatible transcription APIs are supported")
-                            .font(.caption)
+                            .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.orange.opacity(0.1))
-                    .cornerRadius(8)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(Color.primary.opacity(0.04))
+                    .cornerRadius(6)
                     
                     // Form fields
                     VStack(alignment: .leading, spacing: 16) {
@@ -79,51 +79,31 @@ struct AddCustomModelCardView: View {
                         }) {
                             Text("Cancel")
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(8)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bordered)
+                        .controlSize(.regular)
                         
-                        Button(action: {
-                            addModel()
-                        }) {
+                        Button(action: { addModel() }) {
                             HStack(spacing: 6) {
                                 if isSaving {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                        .frame(width: 14, height: 14)
+                                    ProgressView().controlSize(.small)
                                 } else {
-                                    Image(systemName: editingModel != nil ? "checkmark.circle.fill" : "plus.circle.fill")
-                                        .font(.system(size: 14))
+                                    Image(systemName: editingModel != nil ? "checkmark.circle" : "plus.circle")
+                                        .font(.system(size: 13))
                                 }
                                 Text(editingModel != nil ? "Update Model" : "Add Model")
                                     .font(.system(size: 13, weight: .medium))
                             }
-                            .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(isFormValid ? Color(.controlAccentColor) : Color.secondary)
-                                    .shadow(color: (isFormValid ? Color(.controlAccentColor) : Color.secondary).opacity(0.2), radius: 2, x: 0, y: 1)
-                            )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
                         .disabled(!isFormValid || isSaving)
                     }
                 }
                 .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.windowBackgroundColor))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(.separatorColor), lineWidth: 1)
-                        )
-                )
+                .background(CardBackground(isSelected: false))
             }
         }
         .alert("Validation Errors", isPresented: $showingAlert) {
