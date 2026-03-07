@@ -120,7 +120,7 @@ class NotchRecorderPanel: KeyablePanel {
     }
     
     func show() {
-        guard let screen = NSScreen.main else { return }
+        guard NSScreen.main != nil else { return }
         let metrics = NotchRecorderPanel.calculateWindowMetrics()
         setFrame(metrics.frame, display: true)
         orderFrontRegardless()
@@ -153,7 +153,7 @@ class NotchRecorderHostingController<Content: View>: NSHostingController<Content
         
         // Add visual effect view as background
         let visualEffect = NSVisualEffectView()
-        visualEffect.material = .dark
+        visualEffect.material = .hudWindow
         visualEffect.state = .active
         visualEffect.blendingMode = .withinWindow
         visualEffect.wantsLayer = true

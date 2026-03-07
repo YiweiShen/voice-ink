@@ -127,8 +127,6 @@ struct MetricsContent: View {
     private var dailyTranscriptionCounts: [(date: Date, count: Int)] {
         let calendar = Calendar.current
         let now = Date()
-        let thirtyDaysAgo = calendar.date(byAdding: .day, value: -29, to: now)!
-        
         let dailyData = (0..<30).compactMap { dayOffset -> (date: Date, count: Int)? in
             guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { return nil }
             let startOfDay = calendar.startOfDay(for: date)

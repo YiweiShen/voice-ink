@@ -65,7 +65,7 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: .escapeRecorder) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
-                      await self.whisperState.isMiniRecorderVisible else { return }
+                      self.whisperState.isMiniRecorderVisible else { return }
                 
                 // Don't process if custom shortcut is configured
                 guard KeyboardShortcuts.getShortcut(for: .cancelRecorder) == nil else { return }
@@ -109,7 +109,7 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: .cancelRecorder) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
-                      await self.whisperState.isMiniRecorderVisible,
+                      self.whisperState.isMiniRecorderVisible,
                       KeyboardShortcuts.getShortcut(for: .cancelRecorder) != nil else { return }
                 
                 SoundManager.shared.playEscSound()
@@ -137,8 +137,8 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: .toggleEnhancement) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
-                      await self.whisperState.isMiniRecorderVisible,
-                      let enhancementService = await self.whisperState.getEnhancementService() else { return }
+                      self.whisperState.isMiniRecorderVisible,
+                      let enhancementService = self.whisperState.getEnhancementService() else { return }
                 enhancementService.isEnhancementEnabled.toggle()
             }
         }
@@ -172,9 +172,9 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: shortcutName) { [weak self] in
             Task { @MainActor in
                 guard let self = self,
-                      await self.whisperState.isMiniRecorderVisible else { return }
+                      self.whisperState.isMiniRecorderVisible else { return }
                 
-                guard let enhancementService = await self.whisperState.getEnhancementService() else { return }
+                guard let enhancementService = self.whisperState.getEnhancementService() else { return }
                 
                 let availablePrompts = enhancementService.allPrompts
                 if index < availablePrompts.count {
@@ -204,12 +204,10 @@ class MiniRecorderShortcutManager: ObservableObject {
         KeyboardShortcuts.setShortcut(nil, for: .toggleEnhancement)
     }
     
-    deinit {
+    nonisolated deinit {
         visibilityTask?.cancel()
-        Task { @MainActor in
-            deactivateEscapeShortcut()
-            deactivateCancelShortcut()
-            removeEnhancementShortcut()
-        }
+        KeyboardShortcuts.setShortcut(nil, for: .escapeRecorder)
+        KeyboardShortcuts.setShortcut(nil, for: .cancelRecorder)
+        KeyboardShortcuts.setShortcut(nil, for: .toggleEnhancement)
     }
 } 

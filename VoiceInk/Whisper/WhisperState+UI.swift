@@ -64,7 +64,7 @@ extension WhisperState {
         }
         
         if wasRecording {
-            await recorder.stopRecording()
+            recorder.stopRecording()
         }
         
         hideRecorderPanel()

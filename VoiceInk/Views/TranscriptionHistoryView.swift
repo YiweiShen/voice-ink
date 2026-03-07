@@ -353,7 +353,7 @@ struct TranscriptionHistoryView: View {
         
         // Refresh the view
         Task {
-            try? await modelContext.save()
+            try? modelContext.save()
             await loadInitialContent()
         }
     }
@@ -376,7 +376,7 @@ struct TranscriptionHistoryView: View {
         
         // Save changes and refresh
         Task {
-            try? await modelContext.save()
+            try? modelContext.save()
             await loadInitialContent()
         }
     }

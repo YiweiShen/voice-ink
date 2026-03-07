@@ -149,11 +149,11 @@ extension WhisperState {
             }
             
             Task {
-                await withTaskCancellationHandler {
-                    observation.invalidate()
-                } operation: {
+                await withTaskCancellationHandler(operation: {
                     await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in }
-                }
+                }, onCancel: {
+                    observation.invalidate()
+                })
             }
         }
     }
@@ -238,7 +238,7 @@ extension WhisperState {
         
         try? FileManager.default.removeItem(at: coreMLDestination)
         try await unzipCoreMLFile(zipPath, to: modelsDirectory)
-        try verifyAndCleanupCoreMLFiles(model, coreMLDestination, zipPath, progressKey)
+        _ = try verifyAndCleanupCoreMLFiles(model, coreMLDestination, zipPath, progressKey)
     }
     
     private func unzipCoreMLFile(_ zipPath: URL, to destination: URL) async throws {
@@ -358,11 +358,11 @@ extension WhisperState {
 
         // Build a destination URL inside the app-managed models directory
         let baseName = sourceURL.deletingPathExtension().lastPathComponent
-        var destinationURL = modelsDirectory.appendingPathComponent("\(baseName).bin")
+        let destinationURL = modelsDirectory.appendingPathComponent("\(baseName).bin")
 
         // Do not rename on collision; simply notify the user and abort
         if FileManager.default.fileExists(atPath: destinationURL.path) {
-            await NotificationManager.shared.showNotification(
+            NotificationManager.shared.showNotification(
                 title: "A model named \(baseName).bin already exists",
                 type: .warning,
                 duration: 4.0
@@ -383,14 +383,14 @@ extension WhisperState {
                 allAvailableModels.append(imported)
             }
 
-            await NotificationManager.shared.showNotification(
+            NotificationManager.shared.showNotification(
                 title: "Imported \(destinationURL.lastPathComponent)",
                 type: .success,
                 duration: 3.0
             )
         } catch {
             logError("Failed to import local model", error)
-            await NotificationManager.shared.showNotification(
+            NotificationManager.shared.showNotification(
                 title: "Failed to import model: \(error.localizedDescription)",
                 type: .error,
                 duration: 5.0

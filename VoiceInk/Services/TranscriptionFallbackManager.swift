@@ -13,7 +13,7 @@ class EditablePanel: NSPanel {
 }
 
 /// Manages the presentation and dismissal of the `TranscriptionFallbackView`.
-class TranscriptionFallbackManager {
+class TranscriptionFallbackManager: @unchecked Sendable {
     static let shared = TranscriptionFallbackManager()
     
     private var fallbackWindow: NSPanel?
@@ -68,7 +68,9 @@ class TranscriptionFallbackManager {
             object: panel,
             queue: .main
         ) { [weak self] _ in
-            self?.dismiss()
+            Task { @MainActor in
+                self?.dismiss()
+            }
         }
     }
     

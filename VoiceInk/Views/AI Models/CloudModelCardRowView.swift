@@ -273,28 +273,6 @@ struct CloudModelCardView: View {
         isVerifying = false
         verificationStatus = .failure
         return
-        
-        aiService.saveAPIKey(apiKey) { isValid in
-            DispatchQueue.main.async {
-                self.isVerifying = false
-                if isValid {
-                    self.verificationStatus = .success
-                    // Save the API key
-                    UserDefaults.standard.set(self.apiKey, forKey: "\(self.providerKey)APIKey")
-                    self.isConfiguredState = true
-                    
-                    // Collapse the configuration section after successful verification
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        self.isExpanded = false
-                    }
-                } else {
-                    self.verificationStatus = .failure
-                }
-                
-                // Restore original provider
-                // aiService.selectedProvider = originalProvider // This line was removed as per the new_code
-            }
-        }
     }
     
     private func clearAPIKey() {

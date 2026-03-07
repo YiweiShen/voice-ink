@@ -194,7 +194,7 @@ struct ModelManagementView: View {
                             },
                             setDefaultAction: {
                                 Task {
-                                    await whisperState.setDefaultTranscriptionModel(model)
+                                    whisperState.setDefaultTranscriptionModel(model)
                                 }
                             },
                             downloadAction: {
@@ -274,7 +274,7 @@ struct ModelManagementView: View {
                                 },
                                 setDefaultAction: {
                                     Task {
-                                        await whisperState.setDefaultTranscriptionModel(model)
+                                        whisperState.setDefaultTranscriptionModel(model)
                                     }
                                 },
                                 downloadAction: {},

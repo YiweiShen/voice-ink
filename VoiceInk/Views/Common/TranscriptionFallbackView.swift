@@ -26,7 +26,7 @@ struct TranscriptionFallbackView: View {
                 
                 if isHoveringTitleBar {
                     Button(action: {
-                        ClipboardManager.copyToClipboard(editableText)
+                        _ = ClipboardManager.copyToClipboard(editableText)
                         onCopy()
                     }) {
                         Image(systemName: "doc.on.doc")
@@ -55,7 +55,7 @@ struct TranscriptionFallbackView: View {
                 .onAppear {
                     editableText = transcriptionText
                 }
-                .onChange(of: editableText) { newValue in
+                .onChange(of: editableText) { _, newValue in
                     onTextChange?(newValue)
                 }
         }
