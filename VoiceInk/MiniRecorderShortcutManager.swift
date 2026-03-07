@@ -207,7 +207,6 @@ class MiniRecorderShortcutManager: ObservableObject {
     nonisolated deinit {
         visibilityTask?.cancel()
         KeyboardShortcuts.setShortcut(nil, for: .escapeRecorder)
-        KeyboardShortcuts.setShortcut(nil, for: .cancelRecorder)
         KeyboardShortcuts.setShortcut(nil, for: .toggleEnhancement)
     }
 } 

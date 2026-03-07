@@ -10,7 +10,7 @@
 
 ---
 
-VoiceInk Light is a streamlined version of VoiceInk, focusing on essential voice-to-text functionality without the complexity of AI enhancements. This opinionated build prioritizes simplicity, performance, and privacy.
+VoiceInk Lite is a streamlined version of VoiceInk, focusing on essential voice-to-text functionality without the complexity of AI enhancements. This opinionated build prioritizes simplicity, performance, and privacy.
 
 This lightweight version strips away non-essential features to provide a clean, fast transcription experience for users who want straightforward voice-to-text conversion without additional AI-powered features.
 

@@ -299,9 +299,9 @@ struct AudioPlayerView: View {
                         if isRetranscribing {
                             ProgressView().controlSize(.small)
                         } else {
-                            Image(systemName: showRetranscribeSuccess ? "checkmark" : "arrow.clockwise")
+                            Image(systemName: showRetranscribeError ? "exclamationmark.circle" : (showRetranscribeSuccess ? "checkmark" : "arrow.clockwise"))
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(showRetranscribeSuccess ? .green : Color.primary.opacity(0.5))
+                                .foregroundColor(showRetranscribeError ? .red : (showRetranscribeSuccess ? .green : Color.primary.opacity(0.5)))
                         }
                     }
                     .frame(width: 24, height: 24)

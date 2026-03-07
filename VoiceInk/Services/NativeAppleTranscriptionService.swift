@@ -53,7 +53,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
     }
 
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
-        return ""
+        throw ServiceError.unsupportedOS
         
 //        guard model is NativeAppleModel else {
 //            throw ServiceError.invalidModel

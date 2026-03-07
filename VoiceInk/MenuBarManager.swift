@@ -76,7 +76,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 print("MenuBarManager: Reusing existing window")
 
                 if self.mainWindow != existingWindow {
-                    self.mainWindow = nil
+                    self.mainWindow = existingWindow
                 }
             } else {
                 if let window = self.mainWindow, !window.isVisible {

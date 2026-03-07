@@ -69,6 +69,7 @@ class TranscriptionFallbackManager: @unchecked Sendable {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
+                guard self?.fallbackWindow === panel else { return }
                 self?.dismiss()
             }
         }

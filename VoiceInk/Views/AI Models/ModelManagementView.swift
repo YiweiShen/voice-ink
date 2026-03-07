@@ -18,6 +18,7 @@ struct ModelManagementView: View {
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
 
     @State private var isShowingSettings = false
+    @State private var editingPrompt = ""
     @State private var expandAddCloudModel = false
 
     // State for the unified alert
@@ -79,9 +80,10 @@ struct ModelManagementView: View {
 
                         Button(action: {
                             if isShowingSettings {
-                                whisperPrompt.setCustomPrompt(whisperPrompt.getLanguagePrompt(for: "auto"), for: "auto")
+                                whisperPrompt.setCustomPrompt(editingPrompt, for: "auto")
                                 isShowingSettings = false
                             } else {
+                                editingPrompt = whisperPrompt.getLanguagePrompt(for: "auto")
                                 isShowingSettings = true
                             }
                         }) {
@@ -93,7 +95,7 @@ struct ModelManagementView: View {
                     }
 
                     if isShowingSettings {
-                        TextEditor(text: .constant(whisperPrompt.getLanguagePrompt(for: "auto")))
+                        TextEditor(text: $editingPrompt)
                             .font(.system(size: 12, design: .monospaced))
                             .padding(8)
                             .frame(height: 80)
