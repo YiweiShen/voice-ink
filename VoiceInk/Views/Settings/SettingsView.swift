@@ -1,21 +1,17 @@
 import SwiftUI
-import Cocoa
-import CoreAudio
 import KeyboardShortcuts
 import LaunchAtLogin
-import AVFoundation
 
 struct SettingsView: View {
-    @EnvironmentObject private var menuBarManager: MenuBarManager
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @EnvironmentObject private var whisperState: WhisperState
-    @EnvironmentObject private var enhancementService: AIEnhancementService
-    @ObservedObject private var mediaController = MediaController.shared
-    @ObservedObject private var audioDeviceManager = AudioDeviceManager.shared
     @StateObject private var permissionManager = PermissionManager()
-    @State private var systemDefaultDeviceID: AudioDeviceID?
-    @State private var isCustomCancelEnabled = false
     @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
+
+    @State private var isShowingDeleteAlert = false
+    @State private var deleteAlertTitle = ""
+    @State private var deleteAlertMessage = ""
+    @State private var deleteActionClosure: () -> Void = {}
 
     private var allPermissionsGranted: Bool {
         hotkeyManager.selectedHotkey1 != .none &&
@@ -23,33 +19,62 @@ struct SettingsView: View {
         permissionManager.isAccessibilityEnabled
     }
 
-    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                // MARK: - Transcription Models
+                SettingsSection(icon: "cpu", title: "Transcription Models", style: .list) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(localTranscriptionModels, id: \.name) { model in
+                            ModelCardRowView(
+                                model: model,
+                                whisperState: whisperState,
+                                isDownloaded: whisperState.availableModels.contains { $0.name == model.name },
+                                isCurrent: whisperState.currentTranscriptionModel?.name == model.name,
+                                downloadProgress: whisperState.downloadProgress,
+                                modelURL: whisperState.availableModels.first { $0.name == model.name }?.url,
+                                deleteAction: {
+                                    if let downloaded = whisperState.availableModels.first(where: { $0.name == model.name }) {
+                                        deleteAlertTitle = "Delete Model"
+                                        deleteAlertMessage = "Are you sure you want to delete '\(downloaded.name)'?"
+                                        deleteActionClosure = {
+                                            Task { await whisperState.deleteModel(downloaded) }
+                                        }
+                                        isShowingDeleteAlert = true
+                                    }
+                                },
+                                setDefaultAction: {
+                                    Task { whisperState.setDefaultTranscriptionModel(model) }
+                                },
+                                downloadAction: {
+                                    if let localModel = model as? LocalModel {
+                                        Task { await whisperState.downloadModel(localModel) }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
                 // MARK: - Permissions
-                SettingsSection(
-                    icon: "shield",
-                    title: "Permissions",
-                    subtitle: "Required access for VoiceInk to function",
-                    showWarning: !allPermissionsGranted
-                ) {
-                    VStack(spacing: 8) {
-                        PermissionCard(
+                SettingsSection(icon: "shield", title: "Permissions", showWarning: !allPermissionsGranted) {
+                    VStack(spacing: 0) {
+                        PermissionRow(
                             icon: "keyboard",
                             title: "Keyboard Shortcut",
-                            description: "Create a quick shortcut to start recording from any app",
+                            description: "Start recording from any app",
                             isGranted: hotkeyManager.selectedHotkey1 != .none,
-                            buttonTitle: "Set up in Recording & Shortcuts below",
+                            buttonTitle: "Set Up",
                             buttonAction: {},
                             checkPermission: { permissionManager.checkKeyboardShortcut() }
                         )
-                        PermissionCard(
+                        Divider()
+                        PermissionRow(
                             icon: "mic",
                             title: "Microphone Access",
-                            description: "Let VoiceInk listen to your voice to convert speech to text",
+                            description: "Converts your speech to text",
                             isGranted: permissionManager.audioPermissionStatus == .authorized,
-                            buttonTitle: permissionManager.audioPermissionStatus == .notDetermined ? "Request Permission" : "Open System Settings",
+                            buttonTitle: permissionManager.audioPermissionStatus == .notDetermined ? "Request" : "Open Settings",
                             buttonAction: {
                                 if permissionManager.audioPermissionStatus == .notDetermined {
                                     permissionManager.requestAudioPermission()
@@ -61,12 +86,13 @@ struct SettingsView: View {
                             },
                             checkPermission: { permissionManager.checkAudioPermissionStatus() }
                         )
-                        PermissionCard(
+                        Divider()
+                        PermissionRow(
                             icon: "hand.raised",
                             title: "Text Pasting",
-                            description: "Let VoiceInk automatically paste your transcription where you're typing",
+                            description: "Auto-paste transcription where you're typing",
                             isGranted: permissionManager.isAccessibilityEnabled,
-                            buttonTitle: "Open System Settings",
+                            buttonTitle: "Open Settings",
                             buttonAction: {
                                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                                     NSWorkspace.shared.open(url)
@@ -78,232 +104,39 @@ struct SettingsView: View {
                 }
 
                 // MARK: - Recording & Shortcuts
-                SettingsSection(
-                    icon: "command.circle",
-                    title: "Recording & Shortcuts",
-                    subtitle: "Keyboard shortcuts for recording and pasting transcriptions"
-                ) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Recording Hotkeys
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Recording Hotkeys")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
+                SettingsSection(icon: "command", title: "Recording & Shortcuts") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        hotkeyView(title: "Primary", binding: $hotkeyManager.selectedHotkey1, shortcutName: .toggleMiniRecorder)
+
+                        if hotkeyManager.selectedHotkey2 != .none {
                             hotkeyView(
-                                title: "Primary Hotkey",
-                                binding: $hotkeyManager.selectedHotkey1,
-                                shortcutName: .toggleMiniRecorder
+                                title: "Secondary",
+                                binding: $hotkeyManager.selectedHotkey2,
+                                shortcutName: .toggleMiniRecorder2,
+                                isRemovable: true,
+                                onRemove: { withAnimation { hotkeyManager.selectedHotkey2 = .none } }
                             )
+                        }
 
-                            if hotkeyManager.selectedHotkey2 != .none {
-                                hotkeyView(
-                                    title: "Secondary Hotkey",
-                                    binding: $hotkeyManager.selectedHotkey2,
-                                    shortcutName: .toggleMiniRecorder2,
-                                    isRemovable: true,
-                                    onRemove: {
-                                        withAnimation { hotkeyManager.selectedHotkey2 = .none }
-                                    }
-                                )
+                        if hotkeyManager.selectedHotkey1 != .none && hotkeyManager.selectedHotkey2 == .none {
+                            Button(action: { withAnimation { hotkeyManager.selectedHotkey2 = .rightOption } }) {
+                                Label("Add secondary hotkey", systemImage: "plus.circle")
+                                    .font(.system(size: 12))
                             }
+                            .buttonStyle(.plain)
+                            .foregroundColor(.accentColor)
+                        }
 
-                            if hotkeyManager.selectedHotkey1 != .none && hotkeyManager.selectedHotkey2 == .none {
-                                HStack {
-                                    Spacer()
-                                    Button(action: {
-                                        withAnimation { hotkeyManager.selectedHotkey2 = .rightOption }
-                                    }) {
-                                        Label("Add secondary hotkey", systemImage: "plus.circle")
-                                            .font(.system(size: 13))
-                                    }
-                                    .buttonStyle(.plain)
-                                    .foregroundColor(.accentColor)
-                                }
-                            }
-                        }
-                        
-                        Divider()
-                        
-                        // Cancel Recording
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Toggle(isOn: $isCustomCancelEnabled) {
-                                    Text("Custom cancel shortcut")
-                                }
-                                .toggleStyle(.switch)
-                                .onChange(of: isCustomCancelEnabled) { _, newValue in
-                                    if !newValue {
-                                        KeyboardShortcuts.setShortcut(nil, for: .cancelRecorder)
-                                    }
-                                }
-                                
-                                InfoTip(
-                                    title: "Custom Cancel Shortcut",
-                                    message: "Use a custom shortcut instead of double-pressing Escape. Great for Vim users."
-                                )
-                                
-                                Spacer()
-                            }
-                            
-                            if isCustomCancelEnabled {
-                                HStack(spacing: 12) {
-                                    Text("Cancel Shortcut")
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                    
-                                    KeyboardShortcuts.Recorder(for: .cancelRecorder)
-                                        .controlSize(.small)
-                                    
-                                    Spacer()
-                                }
-                                .padding(.leading, 16)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                            }
-                        }
-                        
-                        Divider()
-                        
-                        // Quick Paste
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Quick Paste")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
-                            HStack(spacing: 12) {
-                                Text("Paste Shortcut")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.secondary)
-                                
-                                KeyboardShortcuts.Recorder(for: .pasteLastTranscription)
-                                    .controlSize(.small)
-                                
-                                InfoTip(
-                                    title: "Quick Paste",
-                                    message: "Paste your most recent transcription anywhere in macOS without opening VoiceInk."
-                                )
-                                
-                                Spacer()
-                            }
-                        }
-                        
-                        Text("Quick press: Start recording, press again to stop. Hold down: Record while pressed, release to stop.")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                        Text("Quick press: start recording, press again to stop. Hold: record while held, release to stop.")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.secondary.opacity(0.8))
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 4)
                     }
-                }
-
-                // MARK: - Audio & Feedback
-                SettingsSection(
-                    icon: "speaker.wave.2.bubble.left.fill",
-                    title: "Audio & Feedback",
-                    subtitle: "Sound settings and audio behavior during recording"
-                ) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        SettingsToggleRow(
-                            title: "Recording sounds",
-                            binding: .init(
-                                get: { SoundManager.shared.isEnabled },
-                                set: { SoundManager.shared.isEnabled = $0 }
-                            ),
-                            infoTitle: "Recording Sounds",
-                            infoMessage: "Play audio feedback when recording starts and stops."
-                        )
-
-                        SettingsToggleRow(
-                            title: "Mute other apps while recording",
-                            binding: $mediaController.isSystemMuteEnabled,
-                            infoTitle: "System Audio Muting",
-                            infoMessage: "Automatically mute other apps' audio to improve transcription accuracy."
-                        )
-
-                        SettingsToggleRow(
-                            title: "Keep transcription in clipboard",
-                            binding: Binding(
-                                get: { UserDefaults.standard.bool(forKey: "preserveTranscriptInClipboard") },
-                                set: { UserDefaults.standard.set($0, forKey: "preserveTranscriptInClipboard") }
-                            ),
-                            infoTitle: "Clipboard Management",
-                            infoMessage: "Leave transcriptions in clipboard instead of restoring previous content."
-                        )
-                    }
-                }
-
-                // MARK: - Audio Input
-                SettingsSection(
-                    icon: "mic.fill",
-                    title: "Audio Input",
-                    subtitle: "Select which microphone VoiceInk should use to record your voice"
-                ) {
-                    AudioInputSettingsView()
-                }
-
-                // MARK: - Interface & Behavior
-                SettingsSection(
-                    icon: "rectangle.on.rectangle",
-                    title: "Interface & Behavior",
-                    subtitle: "Customize how VoiceInk appears and behaves"
-                ) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Recorder Style
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Recorder Style")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.primary)
-                                
-                                InfoTip(
-                                    title: "Recorder Styles",
-                                    message: "Notch: Dynamic Island-style recorder at the top. Mini: Moveable floating window."
-                                )
-                                
-                                Spacer()
-                            }
-                            
-                            Picker("Recorder Style", selection: $whisperState.recorderType) {
-                                Text("Notch Recorder").tag("notch")
-                                Text("Mini Recorder").tag("mini")
-                            }
-                            .pickerStyle(.radioGroup)
-                            .padding(.leading, 8)
-                        }
-                        
-                        Divider()
-                        
-                        // App Behavior
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("App Behavior")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
-                            SettingsToggleRow(
-                                title: "Menu bar only (hide dock icon)",
-                                binding: $menuBarManager.isMenuBarOnly,
-                                infoTitle: "Menu Bar Only Mode",
-                                infoMessage: "Hide from Dock and run only from menu bar to keep your Dock clean."
-                            )
-                            
-                            SettingsToggleRow(
-                                title: "Use AppleScript for pasting",
-                                binding: Binding(
-                                    get: { UserDefaults.standard.bool(forKey: "UseAppleScriptPaste") },
-                                    set: { UserDefaults.standard.set($0, forKey: "UseAppleScriptPaste") }
-                                ),
-                                infoTitle: "Paste Method",
-                                infoMessage: "Use AppleScript for pasting. Enable if you have paste issues or non-standard keyboard layout."
-                            )
-                        }
-                    }
+                    .padding(14)
                 }
 
                 // MARK: - Startup
-                SettingsSection(
-                    icon: "power",
-                    title: "Startup",
-                    subtitle: "Control how VoiceInk launches on your Mac"
-                ) {
+                SettingsSection(icon: "power", title: "Startup") {
                     SettingsToggleRow(
                         title: "Launch at login",
                         binding: Binding(
@@ -316,83 +149,32 @@ struct SettingsView: View {
                         infoTitle: "Launch at Login",
                         infoMessage: "Start VoiceInk automatically when you log into your Mac."
                     )
-                }
-
-                // MARK: - Dictionary
-                SettingsSection(
-                    icon: "character.book.closed",
-                    title: "Dictionary",
-                    subtitle: "Custom words and text shortcuts for your transcriptions"
-                ) {
-                    DictionarySettingsView(whisperPrompt: whisperState.whisperPrompt)
-                }
-
-                // MARK: - Advanced & System
-                SettingsSection(
-                    icon: "arrow.up.arrow.down.circle",
-                    title: "Advanced & System",
-                    subtitle: "Import/export settings and system configuration"
-                ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Back up your VoiceInk configuration or transfer settings between devices.")
-                            .settingsDescription()
-
-                        HStack(spacing: 12) {
-                            Button {
-                                ImportExportService.shared.importSettings(
-                                    enhancementService: enhancementService, 
-                                    whisperPrompt: whisperState.whisperPrompt, 
-                                    hotkeyManager: hotkeyManager, 
-                                    menuBarManager: menuBarManager, 
-                                    mediaController: MediaController.shared, 
-                                    soundManager: SoundManager.shared,
-                                    whisperState: whisperState
-                                )
-                            } label: {
-                                Label("Import Settings", systemImage: "arrow.down.doc")
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.regular)
-
-                            Button {
-                                ImportExportService.shared.exportSettings(
-                                    enhancementService: enhancementService, 
-                                    whisperPrompt: whisperState.whisperPrompt, 
-                                    hotkeyManager: hotkeyManager, 
-                                    menuBarManager: menuBarManager, 
-                                    mediaController: MediaController.shared, 
-                                    soundManager: SoundManager.shared,
-                                    whisperState: whisperState
-                                )
-                            } label: {
-                                Label("Export Settings", systemImage: "arrow.up.doc")
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.regular)
-                        }
-                        
-                        Text("API keys and personal data are not included in exports for security.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.tertiary)
-                    }
+                    .padding(14)
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
         }
         .background(Color(NSColor.controlBackgroundColor))
+        .alert(isPresented: $isShowingDeleteAlert) {
+            Alert(
+                title: Text(deleteAlertTitle),
+                message: Text(deleteAlertMessage),
+                primaryButton: .destructive(Text("Delete"), action: deleteActionClosure),
+                secondaryButton: .cancel()
+            )
+        }
         .onAppear {
-            isCustomCancelEnabled = KeyboardShortcuts.getShortcut(for: .cancelRecorder) != nil
-            systemDefaultDeviceID = AudioDeviceConfiguration.getDefaultInputDevice()
-            if audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == nil {
-                audioDeviceManager.selectInputMode(.systemDefault)
-            }
             permissionManager.checkAllPermissions()
         }
     }
-    
+
+    private var localTranscriptionModels: [any TranscriptionModel] {
+        whisperState.allAvailableModels.filter {
+            $0.provider == .local || $0.provider == .nativeApple || $0.provider == .parakeet
+        }
+    }
+
     @ViewBuilder
     private func hotkeyView(
         title: String,
@@ -403,9 +185,10 @@ struct SettingsView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13))
                 .foregroundColor(.secondary)
-            
+                .frame(width: 64, alignment: .leading)
+
             Menu {
                 ForEach(HotkeyManager.HotkeyOption.allCases, id: \.self) { option in
                     Button(action: {
@@ -421,37 +204,37 @@ struct SettingsView: View {
                     }
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text(binding.wrappedValue.displayName)
+                        .font(.system(size: 13))
                         .foregroundColor(.primary)
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 10))
+                        .font(.system(size: 9))
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color(NSColor.controlBackgroundColor))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color(NSColor.windowBackgroundColor))
                 .cornerRadius(6)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
                 )
             }
             .menuStyle(.borderlessButton)
-            
+
             if binding.wrappedValue == .custom {
                 KeyboardShortcuts.Recorder(for: shortcutName)
                     .controlSize(.small)
             }
-            
+
             Spacer()
-            
+
             if isRemovable {
-                Button(action: {
-                    onRemove?()
-                }) {
-                    Image(systemName: "minus.circle.fill")
-                        .foregroundColor(.red)
+                Button(action: { onRemove?() }) {
+                    Image(systemName: "minus.circle")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.primary.opacity(0.35))
                 }
                 .buttonStyle(.plain)
             }
@@ -459,83 +242,157 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - SettingsSection
+
 struct SettingsSection<Content: View>: View {
     let icon: String
     let title: String
-    let subtitle: String
+    var subtitle: String = ""
     let content: Content
     var showWarning: Bool = false
+    var style: SectionStyle = .grouped
 
-    init(icon: String, title: String, subtitle: String, showWarning: Bool = false, @ViewBuilder content: () -> Content) {
+    enum SectionStyle: Equatable { case grouped, list }
+
+    init(icon: String, title: String, subtitle: String = "", showWarning: Bool = false, style: SectionStyle = .grouped, @ViewBuilder content: () -> Content) {
         self.icon = icon
         self.title = title
         self.subtitle = subtitle
         self.showWarning = showWarning
+        self.style = style
         self.content = content()
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
+            // Compact one-line section label
+            HStack(spacing: 5) {
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(showWarning ? .red : Color.primary.opacity(0.5))
-                    .frame(width: 18, alignment: .center)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(showWarning ? Color.red.opacity(0.8) : .secondary)
-                }
-
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(showWarning ? Color.orange : Color.primary.opacity(0.3))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(showWarning ? Color.orange : Color.primary.opacity(0.5))
                 if showWarning {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.red)
-                        .help("Permission required for VoiceInk to function properly")
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
                 }
             }
-            .padding(.bottom, 12)
 
-            Divider()
-                .padding(.bottom, 14)
-
-            content
+            // Content area
+            if style == .grouped {
+                VStack(alignment: .leading, spacing: 0) {
+                    content
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: StyleConstants.cornerRadius)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: StyleConstants.cornerRadius)
+                                .stroke(
+                                    showWarning ? Color.orange.opacity(0.35) : Color.primary.opacity(0.08),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    content
+                }
+            }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(CardBackground(isSelected: showWarning, useAccentGradientWhenSelected: false))
-        .overlay(
-            RoundedRectangle(cornerRadius: StyleConstants.cornerRadius)
-                .stroke(showWarning ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1)
-        )
     }
 }
 
-// MARK: - Helper Components
+// MARK: - PermissionRow
+
+struct PermissionRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    let isGranted: Bool
+    let buttonTitle: String
+    let buttonAction: () -> Void
+    let checkPermission: () -> Void
+    @State private var isRefreshing = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isGranted ? Color.green : Color.primary.opacity(0.35))
+                .frame(width: 14, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Text(description)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            if isGranted {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color.green.opacity(0.8))
+            } else {
+                HStack(spacing: 7) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.4)) { isRefreshing = true }
+                        checkPermission()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            withAnimation { isRefreshing = false }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 10))
+                            .foregroundColor(Color.primary.opacity(0.3))
+                            .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                            .animation(isRefreshing ? .linear(duration: 0.4) : .default, value: isRefreshing)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: buttonAction) {
+                        Text(buttonTitle)
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
+}
+
+// MARK: - SettingsToggleRow
+
 struct SettingsToggleRow: View {
     let title: String
     let binding: Binding<Bool>
     let infoTitle: String
     let infoMessage: String
-    
+
     var body: some View {
         HStack {
-            Toggle(title, isOn: binding)
-                .toggleStyle(.switch)
-            
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
             InfoTip(title: infoTitle, message: infoMessage)
-            
             Spacer()
+            Toggle("", isOn: binding)
+                .toggleStyle(.switch)
+                .labelsHidden()
         }
     }
 }
 
-// Add this extension for consistent description text styling
+// MARK: - Text extension
+
 extension Text {
     func settingsDescription() -> some View {
         self
@@ -544,5 +401,4 @@ extension Text {
             .fixedSize(horizontal: false, vertical: true)
     }
 }
-
 

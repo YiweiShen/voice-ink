@@ -157,6 +157,7 @@ struct ModelManagementView: View {
                     }
                 }
             }
+            .padding(16)
         }
     }
 
@@ -213,6 +214,7 @@ struct ModelManagementView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
             }
+            .padding(16)
         }
     }
 
@@ -307,6 +309,7 @@ struct ModelManagementView: View {
                 )
                 .id("addModelCard")
             }
+            .padding(16)
         }
     }
 

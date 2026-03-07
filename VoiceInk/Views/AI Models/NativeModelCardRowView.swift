@@ -8,106 +8,45 @@ struct NativeAppleModelCardView: View {
     var setDefaultAction: () -> Void
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // Main Content
-            VStack(alignment: .leading, spacing: 6) {
-                headerSection
-                metadataSection
-                descriptionSection
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(model.displayName)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(.labelColor))
+                    if isCurrent {
+                        Text("Default")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.accentColor)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.1)))
+                    } else {
+                        Text("Built-in")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(Color.secondary.opacity(0.7))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(RoundedRectangle(cornerRadius: 3).fill(Color.primary.opacity(0.05)))
+                    }
+                }
+                Text("Native Apple · \(model.language) · macOS 26+")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(.tertiaryLabelColor))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
-            // Action Controls
-            actionSection
-        }
-        .padding(16)
-        .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
-    }
-    
-    private var headerSection: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(model.displayName)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color(.labelColor))
-            
-            statusBadge
-            
-            Spacer()
-        }
-    }
-    
-    private var statusBadge: some View {
-        Group {
-            if isCurrent {
-                Text("Default")
-                    .font(.system(size: 11, weight: .medium))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.accentColor))
-                    .foregroundColor(.white)
-            } else {
-                Text("Built-in")
-                    .font(.system(size: 11, weight: .medium))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.primary.opacity(0.06)))
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-    
-    private var metadataSection: some View {
-        HStack(spacing: 12) {
-            // Native Apple
-            Label("Native Apple", systemImage: "apple.logo")
-                .font(.system(size: 11))
-                .foregroundColor(Color(.secondaryLabelColor))
-                .lineLimit(1)
-            
-            // Language
-            Label(model.language, systemImage: "globe")
-                .font(.system(size: 11))
-                .foregroundColor(Color(.secondaryLabelColor))
-                .lineLimit(1)
-            
-            // On-Device
-            Label("On-Device", systemImage: "checkmark.shield")
-                .font(.system(size: 11))
-                .foregroundColor(Color(.secondaryLabelColor))
-                .lineLimit(1)
-            
-            // Requires macOS 26+
-            Label("macOS 26+", systemImage: "macbook")
-                .font(.system(size: 11))
-                .foregroundColor(Color(.secondaryLabelColor))
-                .lineLimit(1)
-        }
-        .lineLimit(1)
-    }
-    
-    private var descriptionSection: some View {
-        Text(model.description)
-            .font(.system(size: 11))
-            .foregroundColor(Color(.secondaryLabelColor))
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 4)
-    }
-    
-    private var actionSection: some View {
-        HStack(spacing: 8) {
-            if isCurrent {
-                Text("Default Model")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(.secondaryLabelColor))
-            } else {
+
+            if !isCurrent {
                 Button(action: setDefaultAction) {
-                    Text("Set as Default")
+                    Text("Set Default")
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
     }
 } 

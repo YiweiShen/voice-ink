@@ -56,7 +56,7 @@ struct VoiceInkApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
-        .defaultSize(width: 940, height: 730)
+        .defaultSize(width: 720, height: 650)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .commandsRemoved()
 

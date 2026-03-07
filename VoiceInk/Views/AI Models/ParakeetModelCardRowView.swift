@@ -19,152 +19,81 @@ struct ParakeetModelCardRowView: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                headerSection
-                metadataSection
-                descriptionSection
-                progressSection
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(model.displayName)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(Color(.labelColor))
+                        Text("Experimental")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.orange)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(RoundedRectangle(cornerRadius: 3).fill(Color.orange.opacity(0.1)))
+                        if isCurrent {
+                            Text("Default")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.accentColor)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.1)))
+                        }
+                    }
+                    Text("\(model.size) · \(model.language)")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(.tertiaryLabelColor))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                actionSection
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            actionSection
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+
+            if isDownloading {
+                ProgressView()
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 10)
+            }
         }
-        .padding(16)
         .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
     }
 
-    private var headerSection: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(model.displayName)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color(.labelColor))
-            
-            Text("Experimental")
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(Color.orange.opacity(0.8)))
-                .foregroundColor(.white)
-
-            statusBadge
-            Spacer()
-        }
-    }
-
-    private var statusBadge: some View {
-        Group {
-            if isCurrent {
-                Text("Default")
-                    .font(.system(size: 11, weight: .medium))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.accentColor))
-                    .foregroundColor(.white)
-            } else if isDownloaded {
-                Text("Downloaded")
-                    .font(.system(size: 11, weight: .medium))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color(.quaternaryLabelColor)))
-                    .foregroundColor(Color(.labelColor))
-            }
-        }
-    }
-
-    private var metadataSection: some View {
-        HStack(spacing: 12) {
-            Label(model.language, systemImage: "globe")
-            Label(model.size, systemImage: "internaldrive")
-            HStack(spacing: 3) {
-                Text("Speed")
-                progressDotsWithNumber(value: model.speed * 10)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-            HStack(spacing: 3) {
-                Text("Accuracy")
-                progressDotsWithNumber(value: model.accuracy * 10)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-        }
-        .font(.system(size: 11))
-        .foregroundColor(Color(.secondaryLabelColor))
-        .lineLimit(1)
-    }
-
-    private var descriptionSection: some View {
-        Text(model.description)
-            .font(.system(size: 11))
-            .foregroundColor(Color(.secondaryLabelColor))
-            .lineLimit(2)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 4)
-    }
-
-    private var progressSection: some View {
-        Group {
-            if isDownloading {
-                ProgressView() // Indeterminate for now
-                    .progressViewStyle(LinearProgressViewStyle())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 8)
-            }
-        }
-    }
-
     private var actionSection: some View {
-        HStack(spacing: 8) {
-            if isCurrent {
-                Text("Default Model")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(.secondaryLabelColor))
-            } else if isDownloaded {
-                Button(action: {
-                    Task {
-                        whisperState.setDefaultTranscriptionModel(model)
-                    }
-                }) {
-                    Text("Set as Default")
+        HStack(spacing: 6) {
+            if !isDownloaded {
+                Button(action: { Task { await whisperState.downloadParakeetModel() } }) {
+                    Label(isDownloading ? "Downloading…" : "Download", systemImage: "arrow.down.circle")
+                        .font(.system(size: 12))
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(isDownloading)
+            } else if !isCurrent {
+                Button(action: { Task { whisperState.setDefaultTranscriptionModel(model) } }) {
+                    Text("Set Default")
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-            } else {
-                Button(action: {
-                    Task {
-                        await whisperState.downloadParakeetModel()
-                    }
-                }) {
-                    HStack(spacing: 4) {
-                        Text(isDownloading ? "Downloading..." : "Download")
-                        Image(systemName: "arrow.down.circle")
-                    }
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Color.accentColor))
-                }
-                .buttonStyle(.plain)
-                .disabled(isDownloading)
             }
-            
+
             if isDownloaded {
                 Menu {
-                    Button(action: {
-                         whisperState.deleteParakeetModel()
-                    }) {
+                    Button(action: { whisperState.deleteParakeetModel() }) {
                         Label("Delete Model", systemImage: "trash")
                     }
-                    
-                    Button {
-                        whisperState.showParakeetModelInFinder()
-                    } label: {
+                    Button { whisperState.showParakeetModelInFinder() } label: {
                         Label("Show in Finder", systemImage: "folder")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.system(size: 14))
+                        .foregroundColor(Color.primary.opacity(0.4))
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
