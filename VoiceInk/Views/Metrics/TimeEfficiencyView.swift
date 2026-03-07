@@ -45,9 +45,7 @@ struct TimeEfficiencyView: View {
             bottomSection
         }
         .padding(.vertical, 24)
-        .background(Color(.controlBackgroundColor))
-        .cornerRadius(10)
-        .shadow(radius: 2)
+        .background(CardBackground(isSelected: false))
     }
     
     // MARK: - Subviews

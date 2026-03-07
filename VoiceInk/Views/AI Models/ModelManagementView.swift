@@ -207,19 +207,11 @@ struct ModelManagementView: View {
                 }
                 
                 Button(action: { presentImportPanel() }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 14, weight: .medium))
-                        Text("Import Local Model")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.accentColor)
-                    .cornerRadius(12)
+                    Label("Import Local Model", systemImage: "plus.circle")
+                        .font(.system(size: 13, weight: .medium))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
             }
         }
     }
@@ -235,22 +227,22 @@ struct ModelManagementView: View {
                     .settingsDescription()
                 
                 if customModels.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "cloud.slash")
-                            .font(.system(size: 32))
-                            .foregroundColor(.secondary.opacity(0.7))
-                        
+                    VStack(spacing: 8) {
+                        Image(systemName: "cloud")
+                            .font(.system(size: 24, weight: .light))
+                            .foregroundColor(Color.primary.opacity(0.2))
+
                         Text("No cloud models configured")
-                            .font(.headline)
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.secondary)
-                        
-                        Text("Add your first cloud model API to get started with advanced transcription features.")
-                            .font(.subheadline)
+
+                        Text("Add a cloud model API to get started.")
+                            .font(.system(size: 12))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
+                    .padding(.vertical, 16)
                 } else {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(customModels, id: \.id) { model in
@@ -294,19 +286,14 @@ struct ModelManagementView: View {
                         expandAddCloudModel = true
                     }
                 }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 14, weight: .medium))
-                        Text(customModels.isEmpty ? "Add Your First Cloud Model" : "Add Another Cloud Model")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.accentColor)
-                    .cornerRadius(12)
+                    Label(
+                        customModels.isEmpty ? "Add Your First Cloud Model" : "Add Another Cloud Model",
+                        systemImage: "plus.circle"
+                    )
+                    .font(.system(size: 13, weight: .medium))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
                 
                 // Add Custom Model Card
                 AddCustomModelCardView(

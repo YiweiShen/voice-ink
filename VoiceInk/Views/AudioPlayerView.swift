@@ -247,151 +247,86 @@ struct AudioPlayerView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "waveform")
-                        .foregroundStyle(Color.accentColor)
-                    Text("Recording")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .foregroundColor(.secondary)
-                
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.primary.opacity(0.4))
+                Text("Recording")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+
                 Spacer()
-                
+
                 Text(formatTime(playerManager.duration))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .monospacedDigit()
                     .foregroundColor(.secondary)
             }
-            
-            VStack(spacing: 16) {
-                WaveformView(
-                    samples: playerManager.waveformSamples,
-                    currentTime: playerManager.currentTime,
-                    duration: playerManager.duration,
-                    isLoading: playerManager.isLoadingWaveform,
-                    onSeek: { playerManager.seek(to: $0) }
-                )
-                
-                HStack(spacing: 20) {
-                    Button(action: showInFinder) {
-                        Circle()
-                            .fill(Color.orange.opacity(0.1))
-                            .frame(width: 44, height: 44)
-                            .overlay(
-                                Image(systemName: "folder")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(Color.orange)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .help("Show in Finder")
-                    
-                    Button(action: {
-                        if playerManager.isPlaying {
-                            playerManager.pause()
-                        } else {
-                            playerManager.play()
-                        }
-                    }) {
-                        Circle()
-                            .fill(Color.accentColor.opacity(0.1))
-                            .frame(width: 44, height: 44)
-                            .overlay(
-                                Image(systemName: playerManager.isPlaying ? "pause.fill" : "play.fill")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(Color.accentColor)
-                                    .contentTransition(.symbolEffect(.replace.downUp))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .scaleEffect(isHovering ? 1.05 : 1.0)
-                    .onHover { hovering in
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isHovering = hovering
-                        }
-                    }
-                    
-                    Button(action: retranscribeAudio) {
-                        Circle()
-                            .fill(Color.green.opacity(0.1))
-                            .frame(width: 44, height: 44)
-                            .overlay(
-                                Group {
-                                    if isRetranscribing {
-                                        ProgressView()
-                                            .controlSize(.small)
-                                    } else if showRetranscribeSuccess {
-                                        Image(systemName: "checkmark")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundStyle(Color.green)
-                                    } else {
-                                        Image(systemName: "arrow.clockwise")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundStyle(Color.green)
-                                    }
-                                }
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isRetranscribing)
-                    .help("Retranscribe this audio")
-                    
-                    Text(formatTime(playerManager.currentTime))
-                        .font(.system(size: 14, weight: .medium))
-                        .monospacedDigit()
-                        .foregroundColor(.secondary)
+
+            WaveformView(
+                samples: playerManager.waveformSamples,
+                currentTime: playerManager.currentTime,
+                duration: playerManager.duration,
+                isLoading: playerManager.isLoadingWaveform,
+                onSeek: { playerManager.seek(to: $0) }
+            )
+
+            HStack(spacing: 16) {
+                Text(formatTime(playerManager.currentTime))
+                    .font(.system(size: 12, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundColor(.secondary)
+                    .frame(width: 36)
+
+                Button(action: {
+                    if playerManager.isPlaying { playerManager.pause() } else { playerManager.play() }
+                }) {
+                    Image(systemName: playerManager.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .contentTransition(.symbolEffect(.replace.downUp))
+                        .frame(width: 28, height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.primary.opacity(0.08))
+                        )
                 }
+                .buttonStyle(.plain)
+
+                Button(action: retranscribeAudio) {
+                    Group {
+                        if isRetranscribing {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Image(systemName: showRetranscribeSuccess ? "checkmark" : "arrow.clockwise")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(showRetranscribeSuccess ? .green : Color.primary.opacity(0.5))
+                        }
+                    }
+                    .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .disabled(isRetranscribing)
+                .help("Retranscribe this audio")
+
+                Button(action: showInFinder) {
+                    Image(systemName: "folder")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color.primary.opacity(0.5))
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .help("Show in Finder")
+
+                Spacer()
             }
         }
         .padding(.vertical, 12)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .onAppear {
             playerManager.loadAudio(from: url)
         }
-        .overlay(
-            VStack {
-                if showRetranscribeSuccess {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Retranscription successful")
-                            .font(.system(size: 14, weight: .medium))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.green.opacity(0.1))
-                            .stroke(Color.green.opacity(0.2), lineWidth: 1)
-                    )
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                if showRetranscribeError {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .foregroundColor(.red)
-                        Text(errorMessage.isEmpty ? "Retranscription failed" : errorMessage)
-                            .font(.system(size: 14, weight: .medium))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.red.opacity(0.1))
-                            .stroke(Color.red.opacity(0.2), lineWidth: 1)
-                    )
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                Spacer()
-            }
-            .padding(.top, 16)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showRetranscribeSuccess)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showRetranscribeError)
-        )
     }
     
     private func formatTime(_ time: TimeInterval) -> String {

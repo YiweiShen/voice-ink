@@ -145,22 +145,11 @@ struct LocalModelCardView: View {
             // Always show download button for local models when not downloaded
             if !isDownloaded {
                 Button(action: downloadAction) {
-                    HStack(spacing: 4) {
-                        Text(isDownloading ? "Downloading..." : "Download")
-                            .font(.system(size: 12, weight: .medium))
-                        Image(systemName: "arrow.down.circle")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color(.controlAccentColor))
-                            .shadow(color: Color(.controlAccentColor).opacity(0.2), radius: 2, x: 0, y: 1)
-                    )
+                    Label(isDownloading ? "Downloading…" : "Download", systemImage: "arrow.down.circle")
+                        .font(.system(size: 12, weight: .medium))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
                 .disabled(isDownloading)
             }
             

@@ -16,12 +16,12 @@ enum ViewType: String, CaseIterable {
     var icon: String {
         switch self {
         case .metrics: return "gauge.medium"
-        case .history: return "doc.text.fill"
-        case .models: return "brain.head.profile"
-        case .permissions: return "shield.fill"
-        case .audioInput: return "mic.fill"
-        case .dictionary: return "character.book.closed.fill"
-        case .settings: return "gearshape.fill"
+        case .history: return "doc.text"
+        case .models: return "cpu"
+        case .permissions: return "shield"
+        case .audioInput: return "mic"
+        case .dictionary: return "character.book.closed"
+        case .settings: return "gearshape"
         }
     }
 }
@@ -47,46 +47,60 @@ struct VisualEffectView: NSViewRepresentable {
 struct DynamicSidebar: View {
     @Binding var selectedView: ViewType
     @Binding var hoveredView: ViewType?
-    @Environment(\.colorScheme) private var colorScheme
-    @Namespace private var buttonAnimation
+
+    private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
     var body: some View {
-        VStack(spacing: 15) {
+        VStack(spacing: 0) {
             // App Header
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 if let appIcon = NSImage(named: "AppIcon") {
                     Image(nsImage: appIcon)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 28, height: 28)
-                        .cornerRadius(8)
+                        .frame(width: 20, height: 20)
+                        .cornerRadius(5)
                 }
 
                 Text("VoiceInk")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.primary)
 
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             // Navigation Items
-            ForEach(ViewType.allCases, id: \.self) { viewType in
-                DynamicSidebarButton(
-                    title: viewType.rawValue,
-                    systemImage: viewType.icon,
-                    isSelected: selectedView == viewType,
-                    isHovered: hoveredView == viewType,
-                    namespace: buttonAnimation
-                ) {
-                    selectedView = viewType
-                }
-                .onHover { isHovered in
-                    hoveredView = isHovered ? viewType : nil
+            VStack(spacing: 1) {
+                ForEach(ViewType.allCases, id: \.self) { viewType in
+                    DynamicSidebarButton(
+                        title: viewType.rawValue,
+                        systemImage: viewType.icon,
+                        isSelected: selectedView == viewType,
+                        isHovered: hoveredView == viewType
+                    ) {
+                        selectedView = viewType
+                    }
+                    .onHover { isHovered in
+                        hoveredView = isHovered ? viewType : nil
+                    }
                 }
             }
+            .padding(.horizontal, 6)
 
             Spacer()
+
+            // Version footer
+            HStack {
+                Text("v\(appVersion)")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.primary.opacity(0.3))
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 12)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -97,40 +111,34 @@ struct DynamicSidebarButton: View {
     let systemImage: String
     let isSelected: Bool
     let isHovered: Bool
-    let namespace: Namespace.ID
     let action: () -> Void
-
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .medium))
-                    .frame(width: 24, height: 24)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isSelected ? .primary : Color.primary.opacity(0.45))
+                    .frame(width: 18, alignment: .center)
 
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                    .foregroundColor(isSelected ? .primary : Color.primary.opacity(0.6))
                     .lineLimit(1)
+
                 Spacer()
             }
-            .foregroundColor(isSelected ? .white : (isHovered ? .accentColor : .primary))
-            .frame(height: 40)
+            .frame(height: 30)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 16)
+            .padding(.horizontal, 8)
             .background(
-                ZStack {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.accentColor)
-                            .shadow(color: Color.accentColor.opacity(0.5), radius: 5, x: 0, y: 2)
-                    } else if isHovered {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                Group {
+                    if isSelected || isHovered {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.primary.opacity(isSelected ? 0.08 : 0.04))
                     }
                 }
             )
-            .padding(.horizontal, 8)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -159,8 +167,8 @@ struct ContentView: View {
                 selectedView: $selectedView,
                 hoveredView: $hoveredView
             )
-            .frame(width: 200)
-            .navigationSplitViewColumnWidth(200)
+            .frame(width: 190)
+            .navigationSplitViewColumnWidth(190)
         } detail: {
             detailView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -173,31 +181,21 @@ struct ContentView: View {
             hasLoadedData = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToDestination)) { notification in
-            print("ContentView: Received navigation notification")
             if let destination = notification.userInfo?["destination"] as? String {
-                print("ContentView: Destination received: \(destination)")
                 switch destination {
                 case "Dashboard":
-                    print("ContentView: Navigating to Dashboard")
                     selectedView = .metrics
                 case "Settings":
-                    print("ContentView: Navigating to Settings")
                     selectedView = .settings
                 case "AI Models":
-                    print("ContentView: Navigating to AI Models")
                     selectedView = .models
                 case "History":
-                    print("ContentView: Navigating to History")
                     selectedView = .history
                 case "Permissions":
-                    print("ContentView: Navigating to Permissions")
                     selectedView = .permissions
                 default:
-                    print("ContentView: No matching destination found for: \(destination)")
                     break
                 }
-            } else {
-                print("ContentView: No destination in notification")
             }
         }
     }
@@ -228,4 +226,3 @@ struct ContentView: View {
         }
     }
 }
-

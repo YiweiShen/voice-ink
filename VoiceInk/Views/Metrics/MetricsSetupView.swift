@@ -10,40 +10,33 @@ struct MetricsSetupView: View {
         ScrollView {
             VStack(spacing: 24) {
                 // Header
-                VStack(spacing: 12) {
+                VStack(spacing: 8) {
                     AppIconView()
-                        .frame(width: 80, height: 80)
-                        .padding(.bottom, 20)
-                    
-                    VStack(spacing: 4) {
-                        Text("Welcome to VoiceInk")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .multilineTextAlignment(.center)
-                        
-                        Text("Let's get you set up in just a few quick steps")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
+                        .frame(width: 52, height: 52)
+                        .padding(.bottom, 4)
+
+                    Text("Welcome to VoiceInk")
+                        .font(.system(size: 22, weight: .bold))
+                        .multilineTextAlignment(.center)
+
+                    Text("Complete these steps to get started")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .padding(.top, 20)
-                .padding(.bottom, 20)
+                .padding(.top, 32)
+                .padding(.bottom, 16)
                 
                 // Setup Steps
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(0..<3) { index in
                         setupStep(for: index)
                         if index < 2 {
-                            Divider().padding(.leading, 70)
+                            Divider().padding(.leading, 56)
                         }
                     }
                 }
-                .background(Color(NSColor.textBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                )
+                .background(CardBackground(isSelected: false))
                 .padding(.horizontal)
                 
                 Spacer(minLength: 20)
@@ -88,53 +81,47 @@ struct MetricsSetupView: View {
             )
         }
         
-        return HStack(spacing: 16) {
-            Image(systemName: stepInfo.icon)
-                .font(.system(size: 18))
-                .frame(width: 40, height: 40)
-                .background((stepInfo.isCompleted ? Color.green : Color.accentColor).opacity(0.1))
-                .foregroundColor(stepInfo.isCompleted ? .green : Color.accentColor)
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 3) {
+        return HStack(spacing: 14) {
+            Image(systemName: stepInfo.isCompleted ? "checkmark.circle.fill" : stepInfo.icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(stepInfo.isCompleted ? .green : Color.primary.opacity(0.45))
+                .frame(width: 24, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(stepInfo.title)
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 13, weight: .semibold))
                 Text(stepInfo.description)
-                    .font(.subheadline)
+                    .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
-            if stepInfo.isCompleted {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.green)
-            } else {
+
+            if !stepInfo.isCompleted {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Color(NSColor.separatorColor))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.primary.opacity(0.2))
             }
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
     
     private var actionButton: some View {
         Button(action: handleActionButton) {
-            HStack {
+            HStack(spacing: 6) {
                 Text(getActionButtonTitle())
-                    .fontWeight(.semibold)
+                    .font(.system(size: 13, weight: .semibold))
                 Image(systemName: "arrow.right")
+                    .font(.system(size: 11, weight: .semibold))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(Color.accentColor)
             .foregroundColor(.white)
-            .cornerRadius(12)
+            .cornerRadius(8)
         }
         .buttonStyle(.plain)
-        .shadow(color: Color.accentColor.opacity(0.3), radius: 8, y: 4)
     }
     
     private func handleActionButton() {

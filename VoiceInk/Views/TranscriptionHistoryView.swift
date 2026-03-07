@@ -190,32 +190,35 @@ struct TranscriptionHistoryView: View {
     }
     
     private var searchBar: some View {
-        HStack {
+        HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-            TextField("Search your recordings", text: $searchText)
-                .font(.system(size: 16, weight: .regular, design: .default))
+                .font(.system(size: 13))
+                .foregroundColor(Color.primary.opacity(0.35))
+            TextField("Search recordings…", text: $searchText)
+                .font(.system(size: 13))
                 .textFieldStyle(PlainTextFieldStyle())
         }
-        .padding(12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
         .background(CardBackground(isSelected: false))
         .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 50))
-                .foregroundColor(.secondary)
+        VStack(spacing: 10) {
+            Image(systemName: "waveform")
+                .font(.system(size: 32, weight: .light))
+                .foregroundColor(Color.primary.opacity(0.2))
             Text("No recordings yet")
-                .font(.system(size: 24, weight: .semibold, design: .default))
-            Text("Your voice recordings and transcriptions will appear here once you start using VoiceInk")
-                .font(.system(size: 18, weight: .regular, design: .default))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.primary)
+            Text("Your transcriptions will appear here")
+                .font(.system(size: 13))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(CardBackground(isSelected: false))
         .padding(24)
     }
     

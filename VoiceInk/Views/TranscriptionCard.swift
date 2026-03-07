@@ -27,12 +27,12 @@ struct TranscriptionCard: View {
                     Spacer()
                     
                     Text(formatTiming(transcription.duration))
-                        .font(.system(size: 14, weight: .medium, design: .default))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1))
-                        .foregroundColor(.blue)
-                        .cornerRadius(6)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.primary.opacity(0.06))
+                        .foregroundColor(.secondary)
+                        .cornerRadius(5)
                 }
                 
                 // Original text section
@@ -111,8 +111,6 @@ struct TranscriptionCard: View {
         }
         .padding(16)
         .background(CardBackground(isSelected: false))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
         .contextMenu {
             if let enhancedText = transcription.enhancedText {
                 Button {

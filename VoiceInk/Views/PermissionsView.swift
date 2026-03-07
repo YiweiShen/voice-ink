@@ -7,22 +7,17 @@ class PermissionManager: ObservableObject {
     @Published var audioPermissionStatus = AVCaptureDevice.authorizationStatus(for: .audio)
     @Published var isAccessibilityEnabled = false
     @Published var isKeyboardShortcutSet = false
-    
+
     init() {
-        // Start observing system events that might indicate permission changes
         setupNotificationObservers()
-        
-        // Initial permission checks
         checkAllPermissions()
     }
-    
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     private func setupNotificationObservers() {
-        // Only observe when app becomes active, as this is a likely time for permissions to have changed
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(applicationDidBecomeActive),
@@ -30,17 +25,17 @@ class PermissionManager: ObservableObject {
             object: nil
         )
     }
-    
+
     @objc private func applicationDidBecomeActive() {
         checkAllPermissions()
     }
-    
+
     func checkAllPermissions() {
         checkAccessibilityPermissions()
         checkAudioPermissionStatus()
         checkKeyboardShortcut()
     }
-    
+
     func checkAccessibilityPermissions() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false]
         let accessibilityEnabled = AXIsProcessTrustedWithOptions(options)
@@ -48,14 +43,13 @@ class PermissionManager: ObservableObject {
             self.isAccessibilityEnabled = accessibilityEnabled
         }
     }
-    
-    
+
     func checkAudioPermissionStatus() {
         DispatchQueue.main.async {
             self.audioPermissionStatus = AVCaptureDevice.authorizationStatus(for: .audio)
         }
     }
-    
+
     func requestAudioPermission() {
         AVCaptureDevice.requestAccess(for: .audio) { granted in
             DispatchQueue.main.async {
@@ -63,7 +57,7 @@ class PermissionManager: ObservableObject {
             }
         }
     }
-    
+
     func checkKeyboardShortcut() {
         DispatchQueue.main.async {
             self.isKeyboardShortcutSet = KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder) != nil
@@ -80,179 +74,124 @@ struct PermissionCard: View {
     let buttonAction: () -> Void
     let checkPermission: () -> Void
     @State private var isRefreshing = false
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 16) {
-                // Icon with background
-                ZStack {
-                    Circle()
-                        .fill(isGranted ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: isGranted ? "\(icon).fill" : icon)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(isGranted ? .green : .orange)
-                        .symbolRenderingMode(.hierarchical)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isGranted ? .green : Color.primary.opacity(0.45))
+                    .frame(width: 18, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.headline)
+                        .font(.system(size: 13, weight: .semibold))
                     Text(description)
-                        .font(.subheadline)
+                        .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
-                // Status indicator with refresh
-                HStack(spacing: 12) {
+
+                HStack(spacing: 10) {
                     Button(action: {
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            isRefreshing = true
-                        }
+                        withAnimation(.easeInOut(duration: 0.4)) { isRefreshing = true }
                         checkPermission()
-                        
-                        // Reset the animation after a delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isRefreshing = false
-                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isRefreshing = false }
                     }) {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(Color.primary.opacity(0.35))
                             .rotationEffect(.degrees(isRefreshing ? 360 : 0))
                     }
                     .buttonStyle(.plain)
-                    .contentShape(Rectangle())
-                    
-                    if isGranted {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.green)
-                            .symbolRenderingMode(.hierarchical)
-                    } else {
-                        Image(systemName: "xmark.seal.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.orange)
-                            .symbolRenderingMode(.hierarchical)
-                    }
+
+                    Image(systemName: isGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundColor(isGranted ? .green : Color.orange)
                 }
             }
-            
+
             if !isGranted {
                 Button(action: buttonAction) {
                     HStack {
                         Text(buttonTitle)
+                            .font(.system(size: 13, weight: .medium))
                         Spacer()
-                        Image(systemName: "arrow.right")
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 11))
                     }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .cornerRadius(10)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .padding(.leading, 30)
             }
         }
-        .padding()
+        .padding(16)
         .background(CardBackground(isSelected: false))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, y: 2)
     }
 }
 
 struct PermissionsView: View {
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @StateObject private var permissionManager = PermissionManager()
-    
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 32) {
-                // Header
-                VStack(spacing: 24) {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.blue)
-                        .padding(20)
-                        .background(Circle()
-                            .fill(Color(.windowBackgroundColor).opacity(0.9))
-                            .shadow(color: .black.opacity(0.1), radius: 10, y: 5))
-                    
-                    VStack(spacing: 8) {
-                        Text("App Permissions")
-                            .font(.system(size: 28, weight: .bold))
-                        Text("VoiceInk needs these permissions to work properly")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 40)
-                .frame(maxWidth: .infinity)
-                
-                // Permission Cards
-                VStack(spacing: 16) {
-                    // Keyboard Shortcut Permission
-                    PermissionCard(
-                        icon: "keyboard",
-                        title: "Keyboard Shortcut",
-                        description: "Create a quick shortcut to start recording from any app",
-                        isGranted: hotkeyManager.selectedHotkey1 != .none,
-                        buttonTitle: "Set Up Shortcut",
-                        buttonAction: {
-                            NotificationCenter.default.post(
-                                name: .navigateToDestination,
-                                object: nil,
-                                userInfo: ["destination": "Settings"]
-                            )
-                        },
-                        checkPermission: { permissionManager.checkKeyboardShortcut() }
-                    )
-                    
-                    // Audio Permission
-                    PermissionCard(
-                        icon: "mic",
-                        title: "Microphone Access",
-                        description: "Let VoiceInk listen to your voice so it can convert speech to text",
-                        isGranted: permissionManager.audioPermissionStatus == .authorized,
-                        buttonTitle: permissionManager.audioPermissionStatus == .notDetermined ? "Request Permission" : "Open System Settings",
-                        buttonAction: {
-                            if permissionManager.audioPermissionStatus == .notDetermined {
-                                permissionManager.requestAudioPermission()
-                            } else {
-                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
-                                    NSWorkspace.shared.open(url)
-                                }
-                            }
-                        },
-                        checkPermission: { permissionManager.checkAudioPermissionStatus() }
-                    )
-                    
-                    // Accessibility Permission
-                    PermissionCard(
-                        icon: "hand.raised",
-                        title: "Text Pasting",
-                        description: "Let VoiceInk automatically paste your transcription where you're typing",
-                        isGranted: permissionManager.isAccessibilityEnabled,
-                        buttonTitle: "Open Settings",
-                        buttonAction: {
-                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Permissions")
+                    .font(.system(size: 20, weight: .bold))
+                    .padding(.bottom, 4)
+
+                PermissionCard(
+                    icon: "keyboard",
+                    title: "Keyboard Shortcut",
+                    description: "Create a quick shortcut to start recording from any app",
+                    isGranted: hotkeyManager.selectedHotkey1 != .none,
+                    buttonTitle: "Set Up Shortcut in Settings",
+                    buttonAction: {
+                        NotificationCenter.default.post(
+                            name: .navigateToDestination,
+                            object: nil,
+                            userInfo: ["destination": "Settings"]
+                        )
+                    },
+                    checkPermission: { permissionManager.checkKeyboardShortcut() }
+                )
+
+                PermissionCard(
+                    icon: "mic",
+                    title: "Microphone Access",
+                    description: "Let VoiceInk listen to your voice to convert speech to text",
+                    isGranted: permissionManager.audioPermissionStatus == .authorized,
+                    buttonTitle: permissionManager.audioPermissionStatus == .notDetermined
+                        ? "Request Permission"
+                        : "Open System Settings",
+                    buttonAction: {
+                        if permissionManager.audioPermissionStatus == .notDetermined {
+                            permissionManager.requestAudioPermission()
+                        } else {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
                                 NSWorkspace.shared.open(url)
                             }
-                        },
-                        checkPermission: { permissionManager.checkAccessibilityPermissions() }
-                    )
-                    
-                }
+                        }
+                    },
+                    checkPermission: { permissionManager.checkAudioPermissionStatus() }
+                )
+
+                PermissionCard(
+                    icon: "hand.raised",
+                    title: "Text Pasting",
+                    description: "Let VoiceInk automatically paste your transcription where you're typing",
+                    isGranted: permissionManager.isAccessibilityEnabled,
+                    buttonTitle: "Open System Settings",
+                    buttonAction: {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    },
+                    checkPermission: { permissionManager.checkAccessibilityPermissions() }
+                )
             }
             .padding(24)
         }
@@ -262,7 +201,3 @@ struct PermissionsView: View {
         }
     }
 }
-
-#Preview {
-    PermissionsView()
-} 

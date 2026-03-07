@@ -5,34 +5,23 @@ struct MetricCard: View {
     let value: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                // Icon
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 24))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(color)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        Circle()
-                            .fill(color.opacity(0.1))
-                    )
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Text(value)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-                }
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
             }
+            Text(value)
+                .font(.system(size: 26, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.controlBackgroundColor))
-        .cornerRadius(10)
-        .shadow(radius: 2)
+        .padding(16)
+        .background(CardBackground(isSelected: false))
     }
 }
