@@ -1,6 +1,5 @@
 import SwiftUI
 import LaunchAtLogin
-import SwiftData
 import AppKit
 
 class MenuBarManager: NSObject, ObservableObject {
@@ -13,7 +12,6 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private var whisperState: WhisperState
-    private var container: ModelContainer
     private var enhancementService: AIEnhancementService
     private var aiService: AIService
     private var hotkeyManager: HotkeyManager
@@ -21,7 +19,6 @@ class MenuBarManager: NSObject, ObservableObject {
 
     init(
         whisperState: WhisperState,
-        container: ModelContainer,
         enhancementService: AIEnhancementService,
         aiService: AIService,
         hotkeyManager: HotkeyManager
@@ -31,7 +28,6 @@ class MenuBarManager: NSObject, ObservableObject {
             : true
 
         self.whisperState = whisperState
-        self.container = container
         self.enhancementService = enhancementService
         self.aiService = aiService
         self.hotkeyManager = hotkeyManager
@@ -167,7 +163,6 @@ class MenuBarManager: NSObject, ObservableObject {
             .environmentObject(self)
             .environmentObject(enhancementService)
             .environmentObject(aiService)
-            .environment(\.modelContext, ModelContext(container))
             .onDisappear { Task { await self.whisperState.unloadModel() } }
     }
 

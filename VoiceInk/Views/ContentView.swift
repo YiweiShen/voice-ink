@@ -1,26 +1,14 @@
 import SwiftUI
-import SwiftData
 import KeyboardShortcuts
 import AppKit
 
-// ViewType enum with all cases
 enum ViewType: String, CaseIterable {
-    case metrics = "Dashboard"
-    case history = "History"
     case models = "AI Models"
-    case permissions = "Permissions"
-    case audioInput = "Audio Input"
-    case dictionary = "Dictionary"
     case settings = "Settings"
 
     var icon: String {
         switch self {
-        case .metrics: return "gauge.medium"
-        case .history: return "doc.text"
         case .models: return "cpu"
-        case .permissions: return "shield"
-        case .audioInput: return "mic"
-        case .dictionary: return "character.book.closed"
         case .settings: return "gearshape"
         }
     }
@@ -145,21 +133,10 @@ struct DynamicSidebarButton: View {
 }
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var hotkeyManager: HotkeyManager
-    @State private var selectedView: ViewType = .metrics
+    @State private var selectedView: ViewType = .models
     @State private var hoveredView: ViewType?
-    @State private var hasLoadedData = false
-    let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-
-    private var isSetupComplete: Bool {
-        hasLoadedData &&
-        whisperState.currentTranscriptionModel != nil &&
-        hotkeyManager.selectedHotkey1 != .none &&
-        AXIsProcessTrusted()
-    }
 
     var body: some View {
         NavigationSplitView {
@@ -177,22 +154,13 @@ struct ContentView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 940, minHeight: 730)
-        .onAppear {
-            hasLoadedData = true
-        }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToDestination)) { notification in
             if let destination = notification.userInfo?["destination"] as? String {
                 switch destination {
-                case "Dashboard":
-                    selectedView = .metrics
                 case "Settings":
                     selectedView = .settings
                 case "AI Models":
                     selectedView = .models
-                case "History":
-                    selectedView = .history
-                case "Permissions":
-                    selectedView = .permissions
                 default:
                     break
                 }
@@ -203,26 +171,11 @@ struct ContentView: View {
     @ViewBuilder
     private var detailView: some View {
         switch selectedView {
-        case .metrics:
-            if isSetupComplete {
-                MetricsView(skipSetupCheck: true)
-            } else {
-                MetricsSetupView()
-                    .environmentObject(hotkeyManager)
-            }
         case .models:
             ModelManagementView(whisperState: whisperState)
-        case .history:
-            TranscriptionHistoryView()
-        case .audioInput:
-            AudioInputSettingsView()
-        case .dictionary:
-            DictionarySettingsView(whisperPrompt: whisperState.whisperPrompt)
         case .settings:
             SettingsView()
                 .environmentObject(whisperState)
-        case .permissions:
-            PermissionsView()
         }
     }
 }

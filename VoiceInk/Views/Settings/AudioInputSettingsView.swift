@@ -6,38 +6,24 @@ struct AudioInputSettingsView: View {
     @State private var systemDefaultDeviceID: AudioDeviceID?
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Audio Input")
-                    .font(.system(size: 20, weight: .bold))
-                    .padding(.bottom, 4)
-
-                Text("Select which microphone VoiceInk should use to record your voice.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-
-                VStack(spacing: 8) {
-                    ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
-                        AudioDeviceCard(
-                            device: device,
-                            isSystemDefault: device.id == systemDefaultDeviceID,
-                            isSelected: (audioDeviceManager.inputMode == .systemDefault && device.id == systemDefaultDeviceID) ||
-                                        (audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == device.id),
-                            action: {
-                                if device.id == systemDefaultDeviceID {
-                                    audioDeviceManager.selectInputMode(.systemDefault)
-                                } else {
-                                    audioDeviceManager.selectInputMode(.custom)
-                                    audioDeviceManager.selectDevice(id: device.id)
-                                }
-                            }
-                        )
+        VStack(spacing: 8) {
+            ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
+                AudioDeviceCard(
+                    device: device,
+                    isSystemDefault: device.id == systemDefaultDeviceID,
+                    isSelected: (audioDeviceManager.inputMode == .systemDefault && device.id == systemDefaultDeviceID) ||
+                                (audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == device.id),
+                    action: {
+                        if device.id == systemDefaultDeviceID {
+                            audioDeviceManager.selectInputMode(.systemDefault)
+                        } else {
+                            audioDeviceManager.selectInputMode(.custom)
+                            audioDeviceManager.selectDevice(id: device.id)
+                        }
                     }
-                }
+                )
             }
-            .padding(24)
         }
-        .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
             updateSystemDefaultDevice()
             if audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == nil {

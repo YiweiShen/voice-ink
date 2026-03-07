@@ -1,5 +1,6 @@
 import SwiftUI
 import Cocoa
+import CoreAudio
 import KeyboardShortcuts
 import LaunchAtLogin
 import AVFoundation
@@ -10,13 +11,72 @@ struct SettingsView: View {
     @EnvironmentObject private var whisperState: WhisperState
     @EnvironmentObject private var enhancementService: AIEnhancementService
     @ObservedObject private var mediaController = MediaController.shared
+    @ObservedObject private var audioDeviceManager = AudioDeviceManager.shared
+    @StateObject private var permissionManager = PermissionManager()
+    @State private var systemDefaultDeviceID: AudioDeviceID?
     @State private var isCustomCancelEnabled = false
     @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
+
+    private var allPermissionsGranted: Bool {
+        hotkeyManager.selectedHotkey1 != .none &&
+        permissionManager.audioPermissionStatus == .authorized &&
+        permissionManager.isAccessibilityEnabled
+    }
 
     
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                // MARK: - Permissions
+                SettingsSection(
+                    icon: "shield",
+                    title: "Permissions",
+                    subtitle: "Required access for VoiceInk to function",
+                    showWarning: !allPermissionsGranted
+                ) {
+                    VStack(spacing: 8) {
+                        PermissionCard(
+                            icon: "keyboard",
+                            title: "Keyboard Shortcut",
+                            description: "Create a quick shortcut to start recording from any app",
+                            isGranted: hotkeyManager.selectedHotkey1 != .none,
+                            buttonTitle: "Set up in Recording & Shortcuts below",
+                            buttonAction: {},
+                            checkPermission: { permissionManager.checkKeyboardShortcut() }
+                        )
+                        PermissionCard(
+                            icon: "mic",
+                            title: "Microphone Access",
+                            description: "Let VoiceInk listen to your voice to convert speech to text",
+                            isGranted: permissionManager.audioPermissionStatus == .authorized,
+                            buttonTitle: permissionManager.audioPermissionStatus == .notDetermined ? "Request Permission" : "Open System Settings",
+                            buttonAction: {
+                                if permissionManager.audioPermissionStatus == .notDetermined {
+                                    permissionManager.requestAudioPermission()
+                                } else {
+                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+                                        NSWorkspace.shared.open(url)
+                                    }
+                                }
+                            },
+                            checkPermission: { permissionManager.checkAudioPermissionStatus() }
+                        )
+                        PermissionCard(
+                            icon: "hand.raised",
+                            title: "Text Pasting",
+                            description: "Let VoiceInk automatically paste your transcription where you're typing",
+                            isGranted: permissionManager.isAccessibilityEnabled,
+                            buttonTitle: "Open System Settings",
+                            buttonAction: {
+                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            },
+                            checkPermission: { permissionManager.checkAccessibilityPermissions() }
+                        )
+                    }
+                }
+
                 // MARK: - Recording & Shortcuts
                 SettingsSection(
                     icon: "command.circle",
@@ -171,6 +231,14 @@ struct SettingsView: View {
                     }
                 }
 
+                // MARK: - Audio Input
+                SettingsSection(
+                    icon: "mic.fill",
+                    title: "Audio Input",
+                    subtitle: "Select which microphone VoiceInk should use to record your voice"
+                ) {
+                    AudioInputSettingsView()
+                }
 
                 // MARK: - Interface & Behavior
                 SettingsSection(
@@ -230,40 +298,34 @@ struct SettingsView: View {
                     }
                 }
 
-                // MARK: - Privacy & Data
+                // MARK: - Startup
                 SettingsSection(
-                    icon: "lock.shield",
-                    title: "Privacy & Data",
-                    subtitle: "Control transcript storage and automatic data cleanup"
+                    icon: "power",
+                    title: "Startup",
+                    subtitle: "Control how VoiceInk launches on your Mac"
                 ) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        AudioCleanupSettingsView()
-                        
-                        Divider()
-                        
-                        // Startup Settings
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Startup")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
-                            SettingsToggleRow(
-                                title: "Launch at login",
-                                binding: Binding(
-                                    get: { launchAtLoginEnabled },
-                                    set: { newValue in
-                                        launchAtLoginEnabled = newValue
-                                        LaunchAtLogin.isEnabled = newValue
-                                    }
-                                ),
-                                infoTitle: "Launch at Login",
-                                infoMessage: "Start VoiceInk automatically when you log into your Mac."
-                            )
-                        }
-                    }
+                    SettingsToggleRow(
+                        title: "Launch at login",
+                        binding: Binding(
+                            get: { launchAtLoginEnabled },
+                            set: { newValue in
+                                launchAtLoginEnabled = newValue
+                                LaunchAtLogin.isEnabled = newValue
+                            }
+                        ),
+                        infoTitle: "Launch at Login",
+                        infoMessage: "Start VoiceInk automatically when you log into your Mac."
+                    )
                 }
-                
 
+                // MARK: - Dictionary
+                SettingsSection(
+                    icon: "character.book.closed",
+                    title: "Dictionary",
+                    subtitle: "Custom words and text shortcuts for your transcriptions"
+                ) {
+                    DictionarySettingsView(whisperPrompt: whisperState.whisperPrompt)
+                }
 
                 // MARK: - Advanced & System
                 SettingsSection(
@@ -323,6 +385,11 @@ struct SettingsView: View {
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
             isCustomCancelEnabled = KeyboardShortcuts.getShortcut(for: .cancelRecorder) != nil
+            systemDefaultDeviceID = AudioDeviceConfiguration.getDefaultInputDevice()
+            if audioDeviceManager.inputMode == .custom && audioDeviceManager.selectedDeviceID == nil {
+                audioDeviceManager.selectInputMode(.systemDefault)
+            }
+            permissionManager.checkAllPermissions()
         }
     }
     

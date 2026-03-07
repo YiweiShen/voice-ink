@@ -30,12 +30,8 @@ struct CloudModelCardView: View {
         switch model.provider {
         case .groq:
             return "GROQ"
-        case .elevenLabs:
-            return "ElevenLabs"
         case .deepgram:
             return "Deepgram"
-        case .mistral:
-            return "Mistral"
         default:
             return model.provider.rawValue
         }

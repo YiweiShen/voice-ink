@@ -317,41 +317,6 @@ struct CleanTemplateButton: View {
     }
 }
 
-// Keep the old TemplateButton for backward compatibility if needed elsewhere
-struct TemplateButton: View {
-    let prompt: TemplatePrompt
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(systemName: prompt.icon.rawValue)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.accentColor)
-                    .frame(width: 28, height: 28)
-                    .background(Color.accentColor.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(prompt.title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(12)
-            .frame(height: 60)
-            .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.secondary.opacity(0.18), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 // Reusable Trigger Words Editor Component
 struct TriggerWordsEditor: View {
     @Binding var triggerWords: [String]

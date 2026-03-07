@@ -129,7 +129,8 @@ class HotkeyManager: ObservableObject {
         KeyboardShortcuts.onKeyUp(for: .pasteLastTranscription) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
-                LastTranscriptionService.pasteLastTranscription(from: self.whisperState.modelContext)
+                guard let text = self.whisperState.lastTranscriptionText else { return }
+                CursorPaster.pasteAtCursor(text + " ")
             }
         }
         

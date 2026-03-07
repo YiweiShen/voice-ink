@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 import AppKit
 import os
 
@@ -57,11 +56,8 @@ class AIEnhancementService: ObservableObject {
     private let baseTimeout: TimeInterval = 30
     private let rateLimitInterval: TimeInterval = 1.0
     private var lastRequestTime: Date?
-    private let modelContext: ModelContext
-    
-    init(aiService: AIService = AIService(), modelContext: ModelContext) {
+    init(aiService: AIService = AIService()) {
         self.aiService = aiService
-        self.modelContext = modelContext
         
         self.isEnhancementEnabled = UserDefaults.standard.bool(forKey: "isAIEnhancementEnabled")
         self.useClipboardContext = UserDefaults.standard.bool(forKey: "useClipboardContext")

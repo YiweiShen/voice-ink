@@ -13,11 +13,6 @@ struct GeneralSettings: Codable {
     let isMenuBarOnly: Bool?
     let useAppleScriptPaste: Bool?
     let recorderType: String?
-    let isTranscriptionCleanupEnabled: Bool?
-    let transcriptionRetentionMinutes: Int?
-    let isAudioCleanupEnabled: Bool?
-    let audioRetentionPeriod: Int?
-
     let isSoundFeedbackEnabled: Bool?
     let isSystemMuteEnabled: Bool?
     let isTextFormattingEnabled: Bool?
@@ -27,7 +22,6 @@ struct VoiceInkExportedSettings: Codable {
     let version: String
     let customPrompts: [CustomPrompt]
     let dictionaryItems: [DictionaryItem]?
-    let wordReplacements: [String: String]?
     let generalSettings: GeneralSettings?
     let customEmojis: [String]?
     let customCloudModels: [CustomCloudModel]?
@@ -37,16 +31,11 @@ class ImportExportService {
     static let shared = ImportExportService()
     private let currentSettingsVersion: String
     private let dictionaryItemsKey = "CustomDictionaryItems"
-    private let wordReplacementsKey = "wordReplacements"
 
 
     private let keyIsMenuBarOnly = "IsMenuBarOnly"
     private let keyUseAppleScriptPaste = "UseAppleScriptPaste"
     private let keyRecorderType = "RecorderType"
-    private let keyIsAudioCleanupEnabled = "IsAudioCleanupEnabled"
-    private let keyIsTranscriptionCleanupEnabled = "IsTranscriptionCleanupEnabled"
-    private let keyTranscriptionRetentionMinutes = "TranscriptionRetentionMinutes"
-    private let keyAudioRetentionPeriod = "AudioRetentionPeriod"
 
     private let keyIsSoundFeedbackEnabled = "isSoundFeedbackEnabled"
     private let keyIsSystemMuteEnabled = "isSystemMuteEnabled"
@@ -73,8 +62,6 @@ class ImportExportService {
             exportedDictionaryItems = items
         }
 
-        let exportedWordReplacements = UserDefaults.standard.dictionary(forKey: wordReplacementsKey) as? [String: String]
-
         let generalSettingsToExport = GeneralSettings(
             toggleMiniRecorderShortcut: KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder),
             toggleMiniRecorderShortcut2: KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder2),
@@ -84,11 +71,6 @@ class ImportExportService {
             isMenuBarOnly: menuBarManager.isMenuBarOnly,
             useAppleScriptPaste: UserDefaults.standard.bool(forKey: keyUseAppleScriptPaste),
             recorderType: whisperState.recorderType,
-            isTranscriptionCleanupEnabled: UserDefaults.standard.bool(forKey: keyIsTranscriptionCleanupEnabled),
-            transcriptionRetentionMinutes: UserDefaults.standard.integer(forKey: keyTranscriptionRetentionMinutes),
-            isAudioCleanupEnabled: UserDefaults.standard.bool(forKey: keyIsAudioCleanupEnabled),
-            audioRetentionPeriod: UserDefaults.standard.integer(forKey: keyAudioRetentionPeriod),
-
             isSoundFeedbackEnabled: soundManager.isEnabled,
             isSystemMuteEnabled: mediaController.isSystemMuteEnabled,
             isTextFormattingEnabled: UserDefaults.standard.object(forKey: keyIsTextFormattingEnabled) as? Bool ?? true
@@ -98,7 +80,6 @@ class ImportExportService {
             version: currentSettingsVersion,
             customPrompts: exportablePrompts,
             dictionaryItems: exportedDictionaryItems,
-            wordReplacements: exportedWordReplacements,
             generalSettings: generalSettingsToExport,
             customEmojis: nil,
             customCloudModels: customModels
@@ -183,12 +164,6 @@ class ImportExportService {
                         print("No dictionary items (for spelling) found in the imported file. Existing items remain unchanged.")
                     }
 
-                    if let replacementsToImport = importedSettings.wordReplacements {
-                        UserDefaults.standard.set(replacementsToImport, forKey: self.wordReplacementsKey)
-                    } else {
-                        print("No word replacements found in the imported file. Existing replacements remain unchanged.")
-                    }
-
                     if let general = importedSettings.generalSettings {
                         if let shortcut = general.toggleMiniRecorderShortcut {
                             KeyboardShortcuts.setShortcut(shortcut, for: .toggleMiniRecorder)
@@ -215,19 +190,6 @@ class ImportExportService {
                         }
                         if let recType = general.recorderType {
                             whisperState.recorderType = recType
-                        }
-                        
-                        if let transcriptionCleanup = general.isTranscriptionCleanupEnabled {
-                            UserDefaults.standard.set(transcriptionCleanup, forKey: self.keyIsTranscriptionCleanupEnabled)
-                        }
-                        if let transcriptionMinutes = general.transcriptionRetentionMinutes {
-                            UserDefaults.standard.set(transcriptionMinutes, forKey: self.keyTranscriptionRetentionMinutes)
-                        }
-                        if let audioCleanup = general.isAudioCleanupEnabled {
-                            UserDefaults.standard.set(audioCleanup, forKey: self.keyIsAudioCleanupEnabled)
-                        }
-                        if let audioRetention = general.audioRetentionPeriod {
-                            UserDefaults.standard.set(audioRetention, forKey: self.keyAudioRetentionPeriod)
                         }
 
                         if let soundFeedback = general.isSoundFeedbackEnabled {

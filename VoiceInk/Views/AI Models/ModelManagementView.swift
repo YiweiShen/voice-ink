@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 import AppKit
 import UniformTypeIdentifiers
 
@@ -10,8 +9,7 @@ struct ModelManagementView: View {
     @StateObject private var aiService = AIService()
     @StateObject private var customModelManager = CustomModelManager.shared
     @EnvironmentObject private var enhancementService: AIEnhancementService
-    @Environment(\.modelContext) private var modelContext
-    @StateObject private var whisperPrompt = WhisperPrompt()
+@StateObject private var whisperPrompt = WhisperPrompt()
 
     // Settings toggles moved from ModelSettingsView
     @AppStorage("IsTextFormattingEnabled") private var isTextFormattingEnabled = true
