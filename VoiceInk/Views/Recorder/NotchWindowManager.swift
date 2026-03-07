@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 
+@MainActor
 class NotchWindowManager: ObservableObject {
     @Published var isVisible = false
     private var windowController: NSWindowController?

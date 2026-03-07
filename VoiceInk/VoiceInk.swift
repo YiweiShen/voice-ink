@@ -100,9 +100,7 @@ struct VoiceInkApp: App {
                 .environmentObject(enhancementService)
                 .environment(\.modelContext, ModelContext(container))
                 .onDisappear {
-                    Task {
-                        await whisperState.unloadModel()
-                    }
+                    whisperState.unloadModel()
                 }
                 .background(WindowAccessor { window in
                     // Hide window immediately on launch if in menu bar mode

@@ -153,7 +153,7 @@ class MenuBarManager: NSObject, ObservableObject {
         if view is NSHostingView<ContentView> { return true }
         
         // Check if this is a SwiftUI hosting view that contains ContentView
-        if let hostingView = view as? NSHostingView<AnyView> { return true }
+        if view is NSHostingView<AnyView> { return true }
         if String(describing: type(of: view)).contains("NSHostingView") { return true }
         
         // Recursively check subviews

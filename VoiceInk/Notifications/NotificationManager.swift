@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-class NotificationManager {
+class NotificationManager: @unchecked Sendable {
     static let shared = NotificationManager()
 
     private var notificationWindow: NSPanel?
@@ -74,7 +74,9 @@ class NotificationManager {
             withTimeInterval: duration,
             repeats: false
         ) { [weak self] _ in
-            self?.dismissNotification()
+            Task { @MainActor in
+                self?.dismissNotification()
+            }
         }
     }
 

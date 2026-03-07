@@ -129,7 +129,7 @@ class WhisperState: NSObject, ObservableObject {
 
     func toggleRecord() async {
         if recordingState == .recording {
-            await recorder.stopRecording()
+            recorder.stopRecording()
             if let recordedFile {
                 if !shouldCancelRecording {
                     await transcribeAudio(recordedFile)
@@ -189,7 +189,7 @@ class WhisperState: NSObject, ObservableObject {
 
                         } catch {
                             self.logger.error("❌ Failed to start recording: \(error.localizedDescription)")
-                            await NotificationManager.shared.showNotification(title: "Recording failed to start", type: .error)
+                            NotificationManager.shared.showNotification(title: "Recording failed to start", type: .error)
                             await self.dismissMiniRecorder()
                             // Do not remove the file on a failed start, to preserve all recordings.
                             self.recordedFile = nil
@@ -354,28 +354,24 @@ class WhisperState: NSObject, ObservableObject {
             await self.dismissMiniRecorder()
 
         } catch {
-            do {
-                let audioAsset = AVURLAsset(url: url)
-                let duration = (try? CMTimeGetSeconds(await audioAsset.load(.duration))) ?? 0.0
+            let audioAsset = AVURLAsset(url: url)
+            let duration = (try? CMTimeGetSeconds(await audioAsset.load(.duration))) ?? 0.0
 
-                await MainActor.run {
-                    let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                    let recoverySuggestion = (error as? LocalizedError)?.recoverySuggestion ?? ""
-                    let fullErrorText = recoverySuggestion.isEmpty ? errorDescription : "\(errorDescription) \(recoverySuggestion)"
+            await MainActor.run {
+                let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                let recoverySuggestion = (error as? LocalizedError)?.recoverySuggestion ?? ""
+                let fullErrorText = recoverySuggestion.isEmpty ? errorDescription : "\(errorDescription) \(recoverySuggestion)"
 
-                    let failedTranscription = Transcription(
-                        text: "Transcription Failed: \(fullErrorText)",
-                        duration: duration,
-                        enhancedText: nil,
-                        audioFileURL: url.absoluteString
-                    )
+                let failedTranscription = Transcription(
+                    text: "Transcription Failed: \(fullErrorText)",
+                    duration: duration,
+                    enhancedText: nil,
+                    audioFileURL: url.absoluteString
+                )
 
-                    modelContext.insert(failedTranscription)
-                    try? modelContext.save()
-                    NotificationCenter.default.post(name: .transcriptionCreated, object: failedTranscription)
-                }
-            } catch {
-                logger.error("❌ Could not create a record for the failed transcription: \(error.localizedDescription)")
+                modelContext.insert(failedTranscription)
+                try? modelContext.save()
+                NotificationCenter.default.post(name: .transcriptionCreated, object: failedTranscription)
             }
 
             await MainActor.run {

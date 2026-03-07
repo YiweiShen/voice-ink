@@ -197,8 +197,9 @@ class AIService: ObservableObject {
         Task { [weak self] in
             guard let self = self else { return }
             await self.ollamaService.checkConnection()
+            let isConnected = self.ollamaService.isConnected
             DispatchQueue.main.async {
-                completion(self.ollamaService.isConnected)
+                completion(isConnected)
             }
         }
     }

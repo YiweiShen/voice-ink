@@ -269,7 +269,7 @@ class HotkeyManager: ObservableObject {
                 isHandsFreeMode = false
                 Task { @MainActor in
                     guard canProcessHotkeyAction else { return }
-                    await whisperState.handleToggleMiniRecorder()
+                    whisperState.handleToggleMiniRecorder()
                 }
                 return
             }
@@ -277,7 +277,7 @@ class HotkeyManager: ObservableObject {
             if !whisperState.isMiniRecorderVisible {
                 Task { @MainActor in
                     guard canProcessHotkeyAction else { return }
-                    await whisperState.handleToggleMiniRecorder()
+                    whisperState.handleToggleMiniRecorder()
                 }
             }
         } else {
@@ -291,7 +291,7 @@ class HotkeyManager: ObservableObject {
                 } else {
                     Task { @MainActor in
                         guard canProcessHotkeyAction else { return }
-                        await whisperState.handleToggleMiniRecorder()
+                        whisperState.handleToggleMiniRecorder()
                     }
                 }
             }
@@ -314,13 +314,13 @@ class HotkeyManager: ObservableObject {
         if isShortcutHandsFreeMode {
             isShortcutHandsFreeMode = false
             guard canProcessHotkeyAction else { return }
-            await whisperState.handleToggleMiniRecorder()
+            whisperState.handleToggleMiniRecorder()
             return
         }
-        
+
         if !whisperState.isMiniRecorderVisible {
             guard canProcessHotkeyAction else { return }
-            await whisperState.handleToggleMiniRecorder()
+            whisperState.handleToggleMiniRecorder()
         }
     }
     
@@ -337,7 +337,7 @@ class HotkeyManager: ObservableObject {
                 isShortcutHandsFreeMode = true
             } else {
                 guard canProcessHotkeyAction else { return }
-                await whisperState.handleToggleMiniRecorder()
+                whisperState.handleToggleMiniRecorder()
             }
         }
         
@@ -358,9 +358,13 @@ class HotkeyManager: ObservableObject {
         }
     }
     
-    deinit {
-        Task { @MainActor in
-            removeAllMonitoring()
+    nonisolated deinit {
+        // NSEvent.removeMonitor is safe to call from any thread
+        if let monitor = globalEventMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
         }
     }
 }

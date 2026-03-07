@@ -95,7 +95,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
     let name: String
     let displayName: String
     let description: String
-    let provider: ModelProvider = .custom
+    var provider: ModelProvider = .custom
     let apiEndpoint: String
     let apiKey: String
     let modelName: String

@@ -444,7 +444,9 @@ class AudioDeviceManager: ObservableObject {
 
         var address = createPropertyAddress(selector: selector, scope: scope)
         var propertySize = UInt32(MemoryLayout<T>.size)
-        var property: T? = nil
+
+        let ptr = UnsafeMutablePointer<T>.allocate(capacity: 1)
+        defer { ptr.deallocate() }
 
         let status = AudioObjectGetPropertyData(
             deviceID,
@@ -452,7 +454,7 @@ class AudioDeviceManager: ObservableObject {
             0,
             nil,
             &propertySize,
-            &property
+            ptr
         )
 
         if status != noErr {
@@ -460,7 +462,7 @@ class AudioDeviceManager: ObservableObject {
             return nil
         }
 
-        return property
+        return ptr.pointee
     }
 
     private func notifyDeviceChange() {
