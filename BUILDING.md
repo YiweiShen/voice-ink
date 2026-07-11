@@ -9,7 +9,21 @@ Before you begin, ensure you have:
 - Xcode (latest version recommended)
 - Swift (latest version recommended)
 
-## Building whisper.cpp Framework
+## Getting the whisper.cpp Framework
+
+The Xcode project expects the framework at `../whisper.cpp/build-apple/whisper.xcframework` (a sibling of this repository).
+
+### Option A: Download the prebuilt XCFramework (fast, used by CI)
+
+```bash
+WHISPER_VERSION=v1.9.1
+curl -fsSL -o /tmp/whisper-xcframework.zip \
+  "https://github.com/ggml-org/whisper.cpp/releases/download/${WHISPER_VERSION}/whisper-${WHISPER_VERSION}-xcframework.zip"
+mkdir -p ../whisper.cpp
+unzip -q /tmp/whisper-xcframework.zip -d ../whisper.cpp
+```
+
+### Option B: Build from source
 
 1. Clone and build whisper.cpp:
 ```bash

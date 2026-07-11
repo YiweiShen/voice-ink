@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  # Prebuilt whisper.xcframework from the whisper.cpp release page.
+  # Bump this when updating whisper.cpp.
+  WHISPER_VERSION: v1.9.1
+
+jobs:
+  release:
+    name: Build DMG
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Download prebuilt whisper.xcframework
+        run: |
+          curl -fsSL -o /tmp/whisper-xcframework.zip \
+            "https://github.com/ggml-org/whisper.cpp/releases/download/${WHISPER_VERSION}/whisper-${WHISPER_VERSION}-xcframework.zip"
+          # The zip contains build-apple/whisper.xcframework, matching the
+          # ../whisper.cpp/build-apple/whisper.xcframework path in the Xcode project.
+          mkdir -p "${GITHUB_WORKSPACE}/../whisper.cpp"
+          unzip -q /tmp/whisper-xcframework.zip -d "${GITHUB_WORKSPACE}/../whisper.cpp"
+
+      - name: Archive VoiceInk.app (unsigned)
+        run: |
+          VERSION_OVERRIDE=()
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION_OVERRIDE=("MARKETING_VERSION=${GITHUB_REF_NAME#v}")
+          fi
+          xcodebuild -project VoiceInk.xcodeproj \
+            -scheme VoiceInk \
+            -configuration Release \
+            -archivePath /tmp/VoiceInk.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            "${VERSION_OVERRIDE[@]}"
+
+      - name: Package DMG
+        id: package
+        run: |
+          cp -R /tmp/VoiceInk.xcarchive/Products/Applications/VoiceInk.app ./VoiceInk.app
+          hdiutil create \
+            -volname "VoiceInk" \
+            -srcfolder ./VoiceInk.app \
+            -ov \
+            -format UDZO \
+            ./voice-ink.dmg
+          shasum -a 256 voice-ink.dmg | tee voice-ink.dmg.sha256
+          echo "sha256=$(awk '{print $1}' voice-ink.dmg.sha256)" >> "$GITHUB_OUTPUT"
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-ink-dmg
+          path: |
+            voice-ink.dmg
+            voice-ink.dmg.sha256
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            voice-ink.dmg
+            voice-ink.dmg.sha256
+          generate_release_notes: true
+          body: |
+            ### Install
+
+            ```bash
+            brew install yiweishen/tap/voice-ink
+            ```
+
+            Or download `voice-ink.dmg` below.
+
+            ### Homebrew cask bump
+
+            Update `Casks/voice-ink.rb` in [yiweishen/homebrew-tap](https://github.com/yiweishen/homebrew-tap):
+
+            ```ruby
+            version "${{ steps.package.outputs.version }}"
+            sha256 "${{ steps.package.outputs.sha256 }}"
+            ```

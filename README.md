@@ -57,6 +57,19 @@ hdiutil create \
   ./voice-ink.dmg
 ```
 
+### Automated Releases (GitHub Actions)
+
+Releases are built automatically by the [Release workflow](.github/workflows/release.yml). To cut a release:
+
+```bash
+git tag v0.0.4
+git push origin v0.0.4
+```
+
+The workflow archives the app (unsigned), packages `voice-ink.dmg`, and publishes a GitHub release with the DMG, its SHA-256 checksum, and auto-generated release notes. The release body includes the `version`/`sha256` values needed to bump the Homebrew cask in [yiweishen/homebrew-tap](https://github.com/yiweishen/homebrew-tap).
+
+The workflow can also be run manually from the Actions tab (`workflow_dispatch`), which uploads the DMG as a build artifact without creating a release.
+
 ## Requirements
 
 - macOS 14.0 or later
