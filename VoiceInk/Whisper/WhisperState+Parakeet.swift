@@ -8,11 +8,6 @@ extension WhisperState {
         set { UserDefaults.standard.set(newValue, forKey: "ParakeetModelDownloaded") }
     }
 
-    var isParakeetModelDownloading: Bool {
-        get { isDownloadingParakeet }
-        set { isDownloadingParakeet = newValue }
-    }
-
     @MainActor
     func downloadParakeetModel() async {
         if isParakeetModelDownloaded {

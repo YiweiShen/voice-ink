@@ -227,46 +227,6 @@ class AudioDeviceManager: ObservableObject {
         return bufferCount > 0
     }
 
-    func selectDevice(id: AudioDeviceID) {
-        logger.info("Selecting device with ID: \(id)")
-        if let name = getDeviceName(deviceID: id) {
-            logger.info("Selected device name: \(name)")
-        }
-
-        if let deviceToSelect = availableDevices.first(where: { $0.id == id }) {
-            let uid = deviceToSelect.uid
-            DispatchQueue.main.async {
-                self.selectedDeviceID = id
-                UserDefaults.standard.selectedAudioDeviceUID = uid
-                self.logger.info("Device selection saved with UID: \(uid)")
-                self.notifyDeviceChange()
-            }
-        } else {
-            logger.error("Attempted to select unavailable device: \(id)")
-            fallbackToDefaultDevice()
-        }
-    }
-
-    func selectInputMode(_ mode: AudioInputMode) {
-        inputMode = mode
-        UserDefaults.standard.audioInputModeRawValue = mode.rawValue
-
-        if mode == .systemDefault {
-            selectedDeviceID = nil
-            UserDefaults.standard.removeObject(forKey: UserDefaults.Keys.selectedAudioDeviceUID)
-        } else if selectedDeviceID == nil {
-            if inputMode == .custom {
-                if let firstDevice = availableDevices.first {
-                    selectDevice(id: firstDevice.id)
-                }
-            } else if inputMode == .prioritized {
-                selectHighestPriorityAvailableDevice()
-            }
-        }
-
-        notifyDeviceChange()
-    }
-
     func getCurrentDevice() -> AudioDeviceID {
         switch inputMode {
         case .systemDefault:
@@ -294,48 +254,6 @@ class AudioDeviceManager: ObservableObject {
             prioritizedDevices = devices
             logger.info("Loaded \(devices.count) prioritized devices")
         }
-    }
-
-    func savePrioritizedDevices() {
-        if let data = try? JSONEncoder().encode(prioritizedDevices) {
-            UserDefaults.standard.prioritizedDevicesData = data
-            logger.info("Saved \(self.prioritizedDevices.count) prioritized devices")
-        }
-    }
-
-    func addPrioritizedDevice(uid: String, name: String) {
-        guard !prioritizedDevices.contains(where: { $0.id == uid }) else { return }
-        let nextPriority = (prioritizedDevices.map { $0.priority }.max() ?? -1) + 1
-        let device = PrioritizedDevice(id: uid, name: name, priority: nextPriority)
-        prioritizedDevices.append(device)
-        savePrioritizedDevices()
-    }
-
-    func removePrioritizedDevice(id: String) {
-        let wasSelected = selectedDeviceID == availableDevices.first(where: { $0.uid == id })?.id
-        prioritizedDevices.removeAll { $0.id == id }
-
-        let updatedDevices = prioritizedDevices.enumerated().map { index, device in
-            PrioritizedDevice(id: device.id, name: device.name, priority: index)
-        }
-
-        prioritizedDevices = updatedDevices
-        savePrioritizedDevices()
-
-        if wasSelected && inputMode == .prioritized {
-            selectHighestPriorityAvailableDevice()
-        }
-    }
-
-    func updatePriorities(devices: [PrioritizedDevice]) {
-        prioritizedDevices = devices
-        savePrioritizedDevices()
-
-        if inputMode == .prioritized {
-            selectHighestPriorityAvailableDevice()
-        }
-
-        notifyDeviceChange()
     }
 
     private func selectHighestPriorityAvailableDevice() {

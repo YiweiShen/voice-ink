@@ -357,14 +357,3 @@ struct ConfigRow<Trailing: View>: View {
     }
 }
 
-// MARK: - Text extension
-
-extension Text {
-    func settingsDescription() -> some View {
-        self
-            .font(.system(size: 13))
-            .foregroundColor(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-}
-

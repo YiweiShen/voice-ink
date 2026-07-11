@@ -6,17 +6,6 @@ struct TemplatePrompt: Identifiable {
     let promptText: String
     let icon: PromptIcon
     let description: String
-    
-    func toCustomPrompt() -> CustomPrompt {
-        CustomPrompt(
-            id: UUID(),  // Generate new UUID for custom prompt
-            title: title,
-            promptText: promptText,
-            icon: icon,
-            description: description,
-            isPredefined: false
-        )
-    }
 }
 
 enum PromptTemplates {

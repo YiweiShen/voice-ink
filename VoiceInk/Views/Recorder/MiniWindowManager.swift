@@ -75,12 +75,4 @@ class MiniWindowManager: ObservableObject {
         windowController = nil
         miniPanel = nil
     }
-    
-    func toggle() {
-        if isVisible {
-            hide()
-        } else {
-            show()
-        }
-    }
-} 
+}

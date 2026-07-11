@@ -36,12 +36,6 @@ class MenuBarManager: NSObject, ObservableObject {
         updateAppActivationPolicy()
     }
 
-    // MARK: - Toggle Menu Bar Mode
-
-    func toggleMenuBarOnly() {
-        isMenuBarOnly.toggle()
-    }
-
     private func updateAppActivationPolicy() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }

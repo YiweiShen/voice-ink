@@ -4,7 +4,6 @@ import os
 
 enum EnhancementPrompt {
     case transcriptionEnhancement
-    case aiAssistant
 }
 
 class AIEnhancementService: ObservableObject {
@@ -93,10 +92,6 @@ class AIEnhancementService: ObservableObject {
                 self.isEnhancementEnabled = false
             }
         }
-    }
-    
-    func getAIService() -> AIService? {
-        return aiService
     }
     
     var isConfigured: Bool {
@@ -205,29 +200,7 @@ class AIEnhancementService: ObservableObject {
             throw error
         }
     }
-    
-    
-    func addPrompt(title: String, promptText: String, icon: PromptIcon = .documentFill, description: String? = nil, triggerWords: [String] = []) {
-        let newPrompt = CustomPrompt(title: title, promptText: promptText, icon: icon, description: description, isPredefined: false, triggerWords: triggerWords)
-        customPrompts.append(newPrompt)
-        if customPrompts.count == 1 {
-            selectedPromptId = newPrompt.id
-        }
-    }
-    
-    func updatePrompt(_ prompt: CustomPrompt) {
-        if let index = customPrompts.firstIndex(where: { $0.id == prompt.id }) {
-            customPrompts[index] = prompt
-        }
-    }
-    
-    func deletePrompt(_ prompt: CustomPrompt) {
-        customPrompts.removeAll { $0.id == prompt.id }
-        if selectedPromptId == prompt.id {
-            selectedPromptId = allPrompts.first?.id
-        }
-    }
-    
+
     func setActivePrompt(_ prompt: CustomPrompt) {
         selectedPromptId = prompt.id
     }
@@ -258,9 +231,6 @@ class AIEnhancementService: ObservableObject {
 
 enum EnhancementError: Error {
     case notConfigured
-    case invalidResponse
-    case enhancementFailed
-    case networkError
     case customError(String)
 }
 
@@ -269,12 +239,6 @@ extension EnhancementError: LocalizedError {
         switch self {
         case .notConfigured:
             return "AI provider not configured. Please check your API key."
-        case .invalidResponse:
-            return "Invalid response from AI provider."
-        case .enhancementFailed:
-            return "AI enhancement failed to process the text."
-        case .networkError:
-            return "Network connection failed. Check your internet."
         case .customError(let message):
             return message
         }

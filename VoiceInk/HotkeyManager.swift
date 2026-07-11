@@ -345,20 +345,6 @@ class HotkeyManager: ObservableObject {
         shortcutKeyPressStartTime = nil
     }
     
-    // Computed property for backward compatibility with UI
-    var isShortcutConfigured: Bool {
-        let isHotkey1Configured = (selectedHotkey1 == .custom) ? (KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder) != nil) : true
-        let isHotkey2Configured = (selectedHotkey2 == .custom) ? (KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder2) != nil) : true
-        return isHotkey1Configured && isHotkey2Configured
-    }
-    
-    func updateShortcutStatus() {
-        // Called when a custom shortcut changes
-        if selectedHotkey1 == .custom || selectedHotkey2 == .custom {
-            setupHotkeyMonitoring()
-        }
-    }
-    
     nonisolated deinit {
         // NSEvent.removeMonitor is safe to call from any thread
         if let monitor = globalEventMonitor {

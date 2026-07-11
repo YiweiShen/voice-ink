@@ -114,9 +114,4 @@ extension UserDefaults {
     func contains(key: String) -> Bool {
         return object(forKey: key) != nil
     }
-    
-    var isSystemMuteEnabled: Bool {
-        get { bool(forKey: "isSystemMuteEnabled") }
-        set { set(newValue, forKey: "isSystemMuteEnabled") }
-    }
 }

@@ -9,8 +9,7 @@ struct WhisperModel: Identifiable {
     let name: String
     let url: URL
     var coreMLEncoderURL: URL? // Path to the unzipped .mlmodelc directory
-    var isCoreMLDownloaded: Bool { coreMLEncoderURL != nil }
-    
+
     var downloadURL: String {
         "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/\(filename)"
     }
@@ -24,11 +23,6 @@ struct WhisperModel: Identifiable {
         // Only non-quantized models have Core ML versions
         guard !name.contains("q5") && !name.contains("q8") else { return nil }
         return "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/\(name)-encoder.mlmodelc.zip"
-    }
-    
-    var coreMLEncoderDirectoryName: String? {
-        guard coreMLZipDownloadURL != nil else { return nil }
-        return "\(name)-encoder.mlmodelc"
     }
 }
 
@@ -291,17 +285,6 @@ extension WhisperState {
         }
     }
     
-    func clearDownloadedModels() async {
-        for model in availableModels {
-            do {
-                try FileManager.default.removeItem(at: model.url)
-            } catch {
-                logError("Error deleting model during cleanup", error)
-            }
-        }
-        availableModels.removeAll()
-    }
-    
     // MARK: - Resource Management
     
     func cleanupModelResources() async {
@@ -314,55 +297,6 @@ extension WhisperState {
     
     private func logError(_ message: String, _ error: Error) {
         self.logger.error("\(message): \(error.localizedDescription)")
-    }
-
-    // MARK: - Import Local Model (User-provided .bin)
-
-    @MainActor
-    func importLocalModel(from sourceURL: URL) async {
-        // Accept only .bin files for ggml Whisper models
-        guard sourceURL.pathExtension.lowercased() == "bin" else { return }
-
-        // Build a destination URL inside the app-managed models directory
-        let baseName = sourceURL.deletingPathExtension().lastPathComponent
-        let destinationURL = modelsDirectory.appendingPathComponent("\(baseName).bin")
-
-        // Do not rename on collision; simply notify the user and abort
-        if FileManager.default.fileExists(atPath: destinationURL.path) {
-            NotificationManager.shared.showNotification(
-                title: "A model named \(baseName).bin already exists",
-                type: .warning,
-                duration: 4.0
-            )
-            return
-        }
-
-        do {
-            try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
-            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
-
-            // Append ONLY the newly imported model to in-memory lists (no full rescan)
-            let newWhisperModel = WhisperModel(name: baseName, url: destinationURL)
-            availableModels.append(newWhisperModel)
-
-            if !allAvailableModels.contains(where: { $0.name == baseName }) {
-                let imported = ImportedLocalModel(fileBaseName: baseName)
-                allAvailableModels.append(imported)
-            }
-
-            NotificationManager.shared.showNotification(
-                title: "Imported \(destinationURL.lastPathComponent)",
-                type: .success,
-                duration: 3.0
-            )
-        } catch {
-            logError("Failed to import local model", error)
-            NotificationManager.shared.showNotification(
-                title: "Failed to import model: \(error.localizedDescription)",
-                type: .error,
-                duration: 5.0
-            )
-        }
     }
 }
 

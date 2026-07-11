@@ -4,7 +4,6 @@ struct NotchRecorderView: View {
     @ObservedObject var whisperState: WhisperState
     @ObservedObject var recorder: Recorder
     @EnvironmentObject var windowManager: NotchWindowManager
-    @State private var isHovering = false
     @State private var showEnhancementPromptPopover = false
     
     @EnvironmentObject private var enhancementService: AIEnhancementService
@@ -84,9 +83,6 @@ struct NotchRecorderView: View {
                     NotchShape(cornerRadius: 10)
                 }
                 .clipped()
-                .onHover { hovering in
-                    isHovering = hovering
-                }
                 .opacity(windowManager.isVisible ? 1 : 0)
             }
         }

@@ -62,9 +62,4 @@ class SoundManager {
         escSound?.volume = 0.3
         escSound?.play()
     }
-    
-    var isEnabled: Bool {
-        get { isSoundFeedbackEnabled }
-        set { isSoundFeedbackEnabled = newValue }
-    }
-} 
+}

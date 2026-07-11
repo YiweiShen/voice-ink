@@ -38,67 +38,6 @@ struct RecorderToggleButton: View {
     }
 }
 
-// MARK: - Generic Record Button Component
-struct RecorderRecordButton: View {
-    let isRecording: Bool
-    let isProcessing: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(buttonColor)
-                    .frame(width: 25, height: 25)
-                
-                if isProcessing {
-                    ProcessingIndicator(color: .white)
-                        .frame(width: 16, height: 16)
-                } else if isRecording {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white)
-                        .frame(width: 9, height: 9)
-                } else {
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 9, height: 9)
-                }
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(isProcessing)
-    }
-    
-    private var buttonColor: Color {
-        if isProcessing {
-            return Color(red: 0.4, green: 0.4, blue: 0.45)
-        } else if isRecording {
-            return .red
-        } else {
-            return Color(red: 0.3, green: 0.3, blue: 0.35)
-        }
-    }
-}
-
-// MARK: - Processing Indicator Component
-struct ProcessingIndicator: View {
-    @State private var rotation: Double = 0
-    let color: Color
-    
-    var body: some View {
-        Circle()
-            .trim(from: 0.1, to: 0.9)
-            .stroke(color, lineWidth: 1.7)
-            .frame(width: 14, height: 14)
-            .rotationEffect(.degrees(rotation))
-            .onAppear {
-                withAnimation(.linear(duration: 1).repeatForever(autoreverses: false)) {
-                    rotation = 360
-                }
-            }
-    }
-}
-
 // MARK: - Progress Animation Component
 struct ProgressAnimation: View {
     @State private var currentDot = 0

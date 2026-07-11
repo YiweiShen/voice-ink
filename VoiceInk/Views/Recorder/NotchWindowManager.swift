@@ -77,12 +77,4 @@ class NotchWindowManager: ObservableObject {
         windowController = nil
         notchPanel = nil
     }
-    
-    func toggle() {
-        if isVisible {
-            hide()
-        } else {
-            show()
-        }
-    }
-} 
+}

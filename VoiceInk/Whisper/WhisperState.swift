@@ -23,8 +23,6 @@ class WhisperState: NSObject, ObservableObject {
     @Published var isModelLoading = false
     @Published var availableModels: [WhisperModel] = []
     @Published var allAvailableModels: [any TranscriptionModel] = PredefinedModels.models
-    @Published var clipboardMessage = ""
-    @Published var miniRecorderError: String?
     @Published var shouldCancelRecording = false
 
 
@@ -317,10 +315,6 @@ class WhisperState: NSObject, ObservableObject {
             return true
         }
         return false
-    }
-
-    private func cleanupAndDismiss() async {
-        await dismissMiniRecorder()
     }
 }
 

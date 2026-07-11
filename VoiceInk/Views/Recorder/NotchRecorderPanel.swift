@@ -10,34 +10,6 @@ class NotchRecorderPanel: KeyablePanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
     
-    private var notchMetrics: (width: CGFloat, height: CGFloat) {
-        if let screen = NSScreen.main {
-            let safeAreaInsets = screen.safeAreaInsets
-            
-            // Simplified height calculation - matching calculateWindowMetrics
-            let notchHeight: CGFloat
-            if safeAreaInsets.top > 0 {
-                // We're definitely on a notched MacBook
-                notchHeight = safeAreaInsets.top
-            } else {
-                // For external displays or non-notched MacBooks, use system menu bar height
-                notchHeight = NSStatusBar.system.thickness
-            }
-            
-            // Get actual notch width from safe area insets
-            let baseNotchWidth: CGFloat = safeAreaInsets.left > 0 ? safeAreaInsets.left * 2 : 200
-            
-            // Calculate total width including controls and padding
-            // 16pt padding on each side + space for controls
-            let controlsWidth: CGFloat = 64 // Space for buttons on each side (increased width)
-            let paddingWidth: CGFloat = 32 // 16pt on each side
-            let totalWidth = baseNotchWidth + controlsWidth * 2 + paddingWidth
-            
-            return (totalWidth, notchHeight)
-        }
-        return (280, 24)  // Increased fallback width
-    }
-    
     init(contentRect: NSRect) {
         let metrics = NotchRecorderPanel.calculateWindowMetrics()
         

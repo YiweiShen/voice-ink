@@ -1,5 +1,18 @@
 import Foundation
 
+struct DictionaryItem: Identifiable, Hashable, Codable {
+    let id: UUID
+    var word: String
+    var dateAdded: Date
+    var isEnabled: Bool
+
+    init(id: UUID = UUID(), word: String, dateAdded: Date = Date(), isEnabled: Bool = true) {
+        self.id = id
+        self.word = word
+        self.dateAdded = dateAdded
+        self.isEnabled = isEnabled
+    }
+}
 
 @MainActor
 class WhisperPrompt: ObservableObject {
@@ -92,16 +105,6 @@ class WhisperPrompt: ObservableObject {
         }
     }
     
-    private func saveCustomPrompts() {
-        UserDefaults.standard.set(customPrompts, forKey: customPromptsKey)
-        UserDefaults.standard.synchronize() // Force immediate synchronization
-    }
-    
-    func updateDictionaryWords(_ words: [String]) {
-        dictionaryWords = words
-        updateTranscriptionPrompt()
-    }
-    
     func updateTranscriptionPrompt() {
         // Get the currently selected language from UserDefaults
         let selectedLanguage = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "auto"
@@ -134,22 +137,4 @@ class WhisperPrompt: ObservableObject {
         // Otherwise return the default prompt
         return languagePrompts[language] ?? languagePrompts["default"]!
     }
-    
-    func setCustomPrompt(_ prompt: String, for language: String) {
-        customPrompts[language] = prompt
-        saveCustomPrompts()
-        updateTranscriptionPrompt()
-        
-        // Force update the UI
-        objectWillChange.send()
-    }
-    
-    func saveDictionaryItems(_ items: [DictionaryItem]) async {
-        if let encoded = try? JSONEncoder().encode(items) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-            let enabledWords = items.filter { $0.isEnabled }.map { $0.word }
-            dictionaryWords = enabledWords
-            updateTranscriptionPrompt()
-        }
-    }
-} 
+}

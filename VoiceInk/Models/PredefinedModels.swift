@@ -14,64 +14,6 @@ import Foundation
         }
     }
     
-    // Apple Native Speech specific languages with proper BCP-47 format
-    // Based on actual supported locales from SpeechTranscriber.supportedLocales
-    static let appleNativeLanguages = [
-        // English variants
-        "en-US": "English (United States)",
-        "en-GB": "English (United Kingdom)",
-        "en-CA": "English (Canada)",
-        "en-AU": "English (Australia)",
-        "en-IN": "English (India)",
-        "en-IE": "English (Ireland)",
-        "en-NZ": "English (New Zealand)",
-        "en-ZA": "English (South Africa)",
-        "en-SA": "English (Saudi Arabia)",
-        "en-AE": "English (UAE)",
-        "en-SG": "English (Singapore)",
-        "en-PH": "English (Philippines)",
-        "en-ID": "English (Indonesia)",
-        
-        // Spanish variants
-        "es-ES": "Spanish (Spain)",
-        "es-MX": "Spanish (Mexico)",
-        "es-US": "Spanish (United States)",
-        "es-CO": "Spanish (Colombia)",
-        "es-CL": "Spanish (Chile)",
-        "es-419": "Spanish (Latin America)",
-        
-        // French variants
-        "fr-FR": "French (France)",
-        "fr-CA": "French (Canada)",
-        "fr-BE": "French (Belgium)",
-        "fr-CH": "French (Switzerland)",
-        
-        // German variants
-        "de-DE": "German (Germany)",
-        "de-AT": "German (Austria)",
-        "de-CH": "German (Switzerland)",
-        
-        // Chinese variants
-        "zh-CN": "Chinese Simplified (China)",
-        "zh-TW": "Chinese Traditional (Taiwan)",
-        "zh-HK": "Chinese Traditional (Hong Kong)",
-        
-        // Other Asian languages
-        "ja-JP": "Japanese (Japan)",
-        "ko-KR": "Korean (South Korea)",
-        "yue-CN": "Cantonese (China)",
-        
-        // Portuguese variants
-        "pt-BR": "Portuguese (Brazil)",
-        "pt-PT": "Portuguese (Portugal)",
-        
-        // Italian variants
-        "it-IT": "Italian (Italy)",
-        "it-CH": "Italian (Switzerland)",
-        
-        // Arabic
-        "ar-SA": "Arabic (Saudi Arabia)"
-    ]
     
     static var models: [any TranscriptionModel] {
         return predefinedModels + CustomModelManager.shared.customModels

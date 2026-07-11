@@ -7,11 +7,6 @@ enum PredefinedPrompts {
     static let defaultPromptId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
     static let assistantPromptId = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
     
-    static var all: [CustomPrompt] {
-        // Always return the latest predefined prompts from source code
-        createDefaultPrompts()
-    }
-    
     static func createDefaultPrompts() -> [CustomPrompt] {
         [
             CustomPrompt(

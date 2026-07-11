@@ -154,7 +154,6 @@ class OllamaService: ObservableObject {
 // MARK: - Error Types
 enum LocalAIError: Error, LocalizedError {
     case invalidURL
-    case serviceUnavailable
     case invalidResponse
     case modelNotFound
     case serverError
@@ -164,8 +163,6 @@ enum LocalAIError: Error, LocalizedError {
         switch self {
         case .invalidURL:
             return "Invalid Ollama server URL"
-        case .serviceUnavailable:
-            return "Ollama service is not available"
         case .invalidResponse:
             return "Invalid response from Ollama server"
         case .modelNotFound:
